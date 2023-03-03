@@ -7,7 +7,7 @@ import logging
 from gql import Client, gql
 from gql.transport.aiohttp import AIOHTTPTransport
 
-API_ENDPOINT = 'https://labcom.cloud/graphql'
+API_ENDPOINT = "https://labcom.cloud/graphql"
 
 QUERY_SCHEMA = """
 query getContinents {
@@ -70,20 +70,20 @@ _LOGGER = logging.getLogger(__name__)
 
 class Measurement(object):
     id = None
-    scenario = ''
-    parameter = ''
-    unit = ''
-    comment = ''
-    device_serial = ''
-    operator_name = ''
-    value = ''
-    ideal_low = ''
-    ideal_high = ''
+    scenario = ""
+    parameter = ""
+    unit = ""
+    comment = ""
+    device_serial = ""
+    operator_name = ""
+    value = ""
+    ideal_low = ""
+    ideal_high = ""
     timestamp = None
 
     def __init__(self, data) -> None:
         for key, value in data.items():
-            if 'timestamp' in key:
+            if "timestamp" in key:
                 setattr(self, key, datetime.fromtimestamp(value))
             else:
                 setattr(self, key, value)
@@ -91,68 +91,69 @@ class Measurement(object):
 
 class Account(object):
     id = None
-    forename = ''
-    surname = ''
-    street = ''
-    zipcode = ''
-    city = ''
-    phone1 = ''
-    phone2 = ''
-    fax = ''
-    email = ''
-    country = ''
-    canton = ''
-    notes = ''
-    volume = ''
-    pooltext = ''
-    gps = ''
+    forename = ""
+    surname = ""
+    street = ""
+    zipcode = ""
+    city = ""
+    phone1 = ""
+    phone2 = ""
+    fax = ""
+    email = ""
+    country = ""
+    canton = ""
+    notes = ""
+    volume = ""
+    pooltext = ""
+    gps = ""
     Measurements = []
 
     def __init__(self, data) -> None:
         for key, value in data.items():
-            if key == 'Measurements':
-                for m in data['Measurements']:
+            if key == "Measurements":
+                for m in data["Measurements"]:
                     self.Measurements.append(Measurement(m))
             else:
                 setattr(self, key, value)
 
+
 class WaterTreatmentProduct(object):
     id = None
-    name = ''
-    effect = ''
-    phrase = ''
+    name = ""
+    effect = ""
+    phrase = ""
 
     def __init__(self, data) -> None:
         for key, value in data.items():
             setattr(self, key, value)
 
+
 class CloudAccount:
     id = None
-    email = ''
+    email = ""
     last_change_time = None
     last_wtp_change = None
     Accounts = []
 
     def __init__(self, data) -> None:
-        if 'CloudAccount' in data.keys():
-            data = data['CloudAccount']
+        if "CloudAccount" in data.keys():
+            data = data["CloudAccount"]
             # try_set_attr('id', data, self)
             for key, value in data.items():
-                if key == 'Accounts':
-                    for a in data['Accounts']:
+                if key == "Accounts":
+                    for a in data["Accounts"]:
                         self.Accounts.append(Account(a))
-                elif 'last' in key:
+                elif "last" in key:
                     setattr(self, key, datetime.fromtimestamp(value))
                 else:
                     setattr(self, key, value)
 
 
-async def main(token):
+async def api(token):
 
-    transport = AIOHTTPTransport(url=API_ENDPOINT, headers={'Authorization': token})
+    transport = AIOHTTPTransport(url=API_ENDPOINT, headers={"Authorization": token})
     async with Client(
-        transport=transport,
-        fetch_schema_from_transport=False  # Only for building GQL
+        transport=transport, fetch_schema_from_transport=False  # Only for building GQL
     ) as session:
         query = gql(QUERY_SCHEMA)
         result = await session.execute(query)
@@ -161,13 +162,16 @@ async def main(token):
         return parsed_result
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Read all data from cloud API')
-    parser.add_argument('-t', action='store', dest='token', required=True, help='API token (get from https://labcom.cloud/settings)')
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Read all data from cloud API")
+    parser.add_argument(
+        "-t",
+        action="store",
+        dest="token",
+        required=True,
+        help="API token (get from https://labcom.cloud/settings)",
+    )
     arg_result = parser.parse_args()
 
-    result = asyncio.run(main(arg_result.token))
+    result = asyncio.run(api(arg_result.token))
     _LOGGER.info(result)
-
-
-
