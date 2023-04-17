@@ -3,7 +3,7 @@
   "name": "poolllab",
   "documentation": "https://github.com/dala318/python_poollab",
   "issue_tracker": "https://github.com/dala318/python_poollab/issues",
-  "requirements": ["gql", "gql.transport.aiohttp"],
+  "requirements": ["gql"],
   "dependencies": [],
   "codeowners": ["@dala318"],
   "iot_class": "calculated",

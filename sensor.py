@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import logging
-from multiprocessing import pool
+
+# from multiprocessing import pool
 from typing import Any
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
-from homeassistant.components.binary_sensor import PLATFORM_SCHEMA, BinarySensorEntity
+from homeassistant.components.sensor import PLATFORM_SCHEMA, SensorEntity
 from homeassistant.const import STATE_UNKNOWN
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -47,7 +48,7 @@ API_KEY = "api_key"
 # https://github.com/home-assistant/core/blob/dev/homeassistant/helpers/config_validation.py
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
-        vol.Required(API_KEY): cv.entity_id,
+        vol.Required(API_KEY): cv.string,
         # vol.Required(ENTITY_ID): vol.All(vol.Coerce(str)),
         # vol.Optional(DURATION, default=2): vol.All(
         #     vol.Coerce(int),
@@ -82,14 +83,32 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 )
 
 
-def setup_platform(
+async def async_setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
     add_entities: AddEntitiesCallback,
     discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
     api_key = config[API_KEY]
-    poollab_api = poollab.main(api_key)
+    # poollab_api = poollab.api(api_key)
+    poollab_api = await poollab.api(api_key)
+    pass
+    # for x in poollab_api:
+    # add_entities(
+    #     [
+    #         NordpoolMovingPlannerSensor(
+    #             search_length=search_length,
+    #             var_search_length_entity=var_search_length_entity,
+    #             nordpool_entity=nordpool_entity,
+    #             entity_id=entity_id,
+    #             duration=duration,
+    #             var_duration_entity=var_duration_entity,
+    #             accept_cost=accept_cost,
+    #             accept_rate=accept_rate,
+    #         )
+    #     ]
+    # )
+
     # entity_id = config[ENTITY_ID]
     # duration = config[DURATION]
     # var_duration_entity = config[VAR_DURATION_ENTITY]
@@ -133,7 +152,7 @@ def setup_platform(
     #     )
 
 
-class NordpoolPlannerSensor(BinarySensorEntity):
+class NordpoolPlannerSensor(SensorEntity):
     """Base class for nordpool planner"""
 
     _attr_icon = "mdi:flash"
@@ -307,49 +326,3 @@ class NordpoolMovingPlannerSensor(NordpoolPlannerSensor):
                 self._search_length,
             )
             self._update(dt.now().hour, search_length)
-
-
-class NordpoolStaticPlannerSensor(NordpoolPlannerSensor):
-    """Nordpool planner with fixed search length end time"""
-
-    def __init__(self, end_hour, var_end_hour_entity, split_hours, **kwds):
-        super().__init__(**kwds)
-        self._end_hour = end_hour
-        self._var_end_hour_entity = var_end_hour_entity
-        self._split_hours = split_hours
-
-        self._now_hour = dt.now().hour
-        self._remaining = self._get_input_entity_or_default(
-            self._var_duration_entity, self._duration
-        )
-
-    def update(self):
-        """Called from Home Assistant to update entity value"""
-        self._update_np_prices()
-        now = dt.now()
-        end_hour = self._get_input_entity_or_default(
-            self._var_end_hour_entity, self._end_hour
-        )
-
-        # Start by checking if hour has changed
-        if self._now_hour != now.hour:
-            # Reset needed hours as end has been reached
-            if now.hour == end_hour:
-                self._remaining = self._get_input_entity_or_default(
-                    self._var_duration_entity, self._duration
-                )
-            # Else-if since don't want to risk to remove one directly
-            elif self._attr_is_on:
-                self._remaining -= 1
-        self._now_hour = now.hour
-
-        if self._remaining == 0:
-            self._attr_is_on = False
-            self._starts_at = None
-            self._cost_at = None
-            self._now_cost_rate = None
-        else:
-            if self._np is not None:
-                if end_hour < now.hour:
-                    end_hour += 24
-                self._update(now.hour, end_hour - now.hour)
