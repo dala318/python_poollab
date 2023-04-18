@@ -20,7 +20,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.util import dt
 
-from . import poollab, DOMAIN
+from . import DOMAIN
+from .lib import poollab
 
 _LOGGER = logging.getLogger(__name__)
 

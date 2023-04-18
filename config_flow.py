@@ -15,7 +15,8 @@ from homeassistant.exceptions import HomeAssistantError
 
 # from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from . import poollab, DOMAIN
+from . import DOMAIN
+from .lib import poollab
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -73,12 +74,19 @@ class PoolLabConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         user_schema = vol.Schema(
             {
-                vol.Required(CONF_API_KEY): cv.string,
-            },
+                vol.Required(CONF_API_KEY, default=None): cv.string,
+            }
         )
 
+        placeholders = {
+            CONF_API_KEY: "API key",
+        }
+
         return self.async_show_form(
-            step_id="user", data_schema=user_schema, errors=errors
+            step_id="user",
+            data_schema=user_schema,
+            description_placeholders=placeholders,
+            errors=errors,
         )
 
     async def async_step_import(self, import_data) -> FlowResult:
