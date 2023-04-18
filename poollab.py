@@ -116,6 +116,17 @@ class Account(object):
             else:
                 setattr(self, key, value)
 
+    @property
+    def full_name(self) -> str:
+        _full_name = ""
+        if self.forename:
+            _full_name += self.forename
+        if self.surname:
+            if _full_name:
+                _full_name += " "
+            _full_name += self.surname
+        return _full_name
+
 
 class WaterTreatmentProduct(object):
     id = None
