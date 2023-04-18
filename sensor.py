@@ -34,26 +34,47 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 )
 
 
+async def _dry_setup(hass, config, add_entities, discovery_info=None):
+    api_key = config[CONF_API_KEY]
+    poollab_api = poollab.PoolLabApi(api_key)
+    poollab_data = await poollab_api.request()
+    for a in poollab_data.Accounts:
+        params = list(set([m.parameter for m in a.Measurements]))
+        _LOGGER.debug(
+            "Account: id: %s, Name %s, parameters %s", a.id, a.full_name, params
+        )
+        sorted_meas = sorted(a.Measurements, key=lambda x: x.timestamp, reverse=True)
+        param_added = []
+        for m in sorted_meas:
+            if m.parameter not in param_added:
+                _LOGGER.debug(
+                    "Meas: id %s, date %s, parameter %s, scneario %s, value %s, unit %s",
+                    m.id,
+                    m.timestamp,
+                    m.parameter,
+                    m.scenario,
+                    m.value,
+                    m.unit,
+                )
+                param_added.append(m.parameter)
+                add_entities([MeasurementSensor(a, m)])
+
+
 async def async_setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
     add_entities: AddEntitiesCallback,
     discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
-    api_key = config[CONF_API_KEY]
-    poollab_api = await poollab.api(api_key)
-    for a in poollab_api.Accounts:
-        params = list(set([m.parameter for m in a.Measurements]))
-        _LOGGER.info(f"Account: Forename {a.forename}, parameters {params}")
-        sorted_meas = sorted(a.Measurements, key=lambda x: x.timestamp, reverse=True)
-        param_added = []
-        for m in sorted_meas:
-            if m.parameter not in param_added:
-                _LOGGER.info(
-                    f"Meas: id {m.id}, date {m.timestamp}, parameter {m.parameter}, scneario {m.scenario}, value {m.value}, unit {m.unit}"
-                )
-                param_added.append(m.parameter)
-                add_entities([MeasurementSensor(a, m)])
+    await _dry_setup(hass, config, add_entities)
+    return True
+
+
+async def async_setup_entry(hass, config_entry, async_add_devices):
+    """Setup sensor platform for the ui"""
+    config = config_entry.data
+    await _dry_setup(hass, config, async_add_devices)
+    return True
 
 
 class MeasurementSensor(SensorEntity):
@@ -62,24 +83,6 @@ class MeasurementSensor(SensorEntity):
     def __init__(self, account: poollab.Account, meas: poollab.Measurement) -> None:
         self._account = account
         self._latest_measurement = meas
-
-    # @property
-    # def extra_state_attributes(self):
-    #     """Provide attributes for the entity"""
-    #     return {
-    #         # "starts_at": self._starts_at,
-    #         # "cost_at": self._cost_at,
-    #         # "now_cost_rate": self._now_cost_rate,
-    #     }
-
-    # @property
-    # def entity_id(self) -> str:
-    #     return "poollab_account%s_%s" % (
-    #         self._account.id,
-    #         self._latest_measurement.parameter.replace(" ", "_")
-    #         .replace("-", "_")
-    #         .lower(),
-    #     )
 
     @property
     def _attr_unique_id(self) -> str:
@@ -100,12 +103,7 @@ class MeasurementSensor(SensorEntity):
         return DeviceInfo(
             identifiers={(DOMAIN, self._account.id)},
             name=self._account.full_name,
-            # identifiers={
-            #     (DOMAIN, self._account.volume),
-            #     # ("gps", self._account.gps),
-            #     # ("pooltext", self._account.pooltext),
-            # },
-            model=self._account.volume,
+            model="%sm3" % self._account.volume,
             manufacturer="PoolLab",
         )
 
@@ -116,6 +114,19 @@ class MeasurementSensor(SensorEntity):
     @property
     def _attr_state_class(self) -> SensorStateClass:
         return SensorStateClass.MEASUREMENT
+
+    @property
+    def _attr_extra_state_attributes(self):
+        """Provide attributes for the entity"""
+        return {
+            "measured_at": self._latest_measurement.timestamp,
+            "measure": self._latest_measurement.id,
+            "ideal_low": self._latest_measurement.ideal_low,
+            "ideal_high": self._latest_measurement.ideal_high,
+            "device_serial": self._latest_measurement.device_serial,
+            "operator_name": self._latest_measurement.operator_name,
+            "comment": self._latest_measurement.comment,
+        }
 
     def update(self):
         """Called from Home Assistant to update entity value"""

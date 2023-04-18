@@ -69,6 +69,8 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class Measurement(object):
+    """Data class for decoded water measurement"""
+
     id = None
     scenario = ""
     parameter = ""
@@ -90,6 +92,8 @@ class Measurement(object):
 
 
 class Account(object):
+    """Data class for decoded account data"""
+
     id = None
     forename = ""
     surname = ""
@@ -118,6 +122,7 @@ class Account(object):
 
     @property
     def full_name(self) -> str:
+        """Compiled full name of account"""
         _full_name = ""
         if self.forename:
             _full_name += self.forename
@@ -129,6 +134,8 @@ class Account(object):
 
 
 class WaterTreatmentProduct(object):
+    """Data class for decoded water treatment producs"""
+
     id = None
     name = ""
     effect = ""
@@ -140,6 +147,8 @@ class WaterTreatmentProduct(object):
 
 
 class CloudAccount:
+    """Master class for PoolLab data"""
+
     id = None
     email = ""
     last_change_time = None
@@ -160,16 +169,45 @@ class CloudAccount:
                     setattr(self, key, value)
 
 
-async def api(token):
-    transport = AIOHTTPTransport(url=API_ENDPOINT, headers={"Authorization": token})
-    async with Client(
-        transport=transport, fetch_schema_from_transport=False  # Only for building GQL
-    ) as session:
-        query = gql(QUERY_SCHEMA)
-        result = await session.execute(query)
-        _LOGGER.debug(json.dumps(result, indent=2))
-        parsed_result = CloudAccount(result)
-        return parsed_result
+class PoolLabApi:
+    """Public API class for PoolLab"""
+
+    def __init__(self, token: str) -> None:
+        self._token = token
+        self._latest_measurement = None
+
+    async def _query(self) -> bool:
+        transport = AIOHTTPTransport(
+            url=API_ENDPOINT, headers={"Authorization": self._token}
+        )
+        async with Client(
+            transport=transport,
+            fetch_schema_from_transport=False,  # Only for building GQL
+        ) as session:
+            query = gql(QUERY_SCHEMA)
+            result = await session.execute(query)
+            # _LOGGER.debug(json.dumps(result, indent=2))
+            # _LOGGER.debug(json.dumps(result))
+            if result is not None:
+                self._latest_measurement = result
+                return True
+        return False
+
+    async def test(self) -> bool:
+        """Testing the cloud data connection"""
+        try:
+            if await self._query():
+                return True
+        except Exception:
+            pass
+        return False
+
+    async def request(self) -> CloudAccount:
+        """Fetching the cloud data"""
+        await self._query()
+        if self._latest_measurement is not None:
+            return CloudAccount(self._latest_measurement)
+        return None
 
 
 if __name__ == "__main__":
@@ -182,6 +220,5 @@ if __name__ == "__main__":
         help="API token (get from https://labcom.cloud/pages/user-setting)",
     )
     arg_result = parser.parse_args()
-
-    result = asyncio.run(api(arg_result.token))
-    _LOGGER.info(result)
+    poollab_api = PoolLabApi(arg_result.token)
+    _LOGGER.info(asyncio.run(poollab_api.request()))
