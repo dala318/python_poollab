@@ -7,7 +7,7 @@ import logging
 from gql import Client, gql
 from gql.transport.aiohttp import AIOHTTPTransport
 
-API_ENDPOINT = "https://labcom.cloud/graphql"
+API_ENDPOINT = "https://backend.labcom.cloud/graphql"
 
 QUERY_SCHEMA = """
 query getContinents {
@@ -150,7 +150,6 @@ class CloudAccount:
 
 
 async def api(token):
-
     transport = AIOHTTPTransport(url=API_ENDPOINT, headers={"Authorization": token})
     async with Client(
         transport=transport, fetch_schema_from_transport=False  # Only for building GQL
@@ -169,7 +168,7 @@ if __name__ == "__main__":
         action="store",
         dest="token",
         required=True,
-        help="API token (get from https://labcom.cloud/settings)",
+        help="API token (get from https://labcom.cloud/pages/user-setting)",
     )
     arg_result = parser.parse_args()
 
