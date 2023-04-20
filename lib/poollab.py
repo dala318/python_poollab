@@ -202,6 +202,10 @@ class PoolLabApi:
             pass
         return False
 
+    async def update(self) -> bool:
+        """Fetch data from API and store"""
+        return await self._query()
+
     async def request(self) -> CloudAccount:
         """Fetching the cloud data"""
         await self._query()

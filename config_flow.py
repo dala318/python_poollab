@@ -15,14 +15,10 @@ from homeassistant.exceptions import HomeAssistantError
 
 # from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from . import DOMAIN
+from . import DOMAIN, InvalidAuth
 from .lib import poollab
 
 _LOGGER = logging.getLogger(__name__)
-
-
-class InvalidAuth(HomeAssistantError):
-    """Error to indicate there is invalid auth."""
 
 
 class PoolLabConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
