@@ -1,45 +1,23 @@
+"""Sensor integration for PoolLab"""
+import logging
 from __future__ import annotations
 
-import logging
-
-# from multiprocessing import pool
-# from typing import Any
-import voluptuous as vol
+from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.sensor.const import SensorStateClass
-import homeassistant.helpers.config_validation as cv
-from homeassistant.components.sensor import (
-    PLATFORM_SCHEMA,
-    SensorEntity,
-)
-
-# from homeassistant.const import STATE_UNKNOWN
-from homeassistant.const import CONF_API_KEY
-from homeassistant.core import HomeAssistant
+from homeassistant.core import callback
 from homeassistant.helpers.entity import DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
-from homeassistant.util import dt
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from . import DOMAIN
+from . import DOMAIN, PoolLabCoordinator
 from .lib import poollab
 
 _LOGGER = logging.getLogger(__name__)
 
 
-# https://developers.home-assistant.io/docs/development_validation/
-# https://github.com/home-assistant/core/blob/dev/homeassistant/helpers/config_validation.py
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
-    {
-        vol.Required(CONF_API_KEY): cv.string,
-    },
-)
-
-
-async def _dry_setup(hass, config, add_entities, discovery_info=None):
-    api_key = config[CONF_API_KEY]
-    poollab_api = poollab.PoolLabApi(api_key)
-    poollab_data = await poollab_api.request()
-    for a in poollab_data.Accounts:
+async def async_setup_entry(hass, config_entry, async_add_entities):
+    """Setup sensor platform for the ui"""
+    api_coordinator = hass.data[DOMAIN][config_entry.entry_id]
+    for a in api_coordinator.data.Accounts:
         params = list(set([m.parameter for m in a.Measurements]))
         _LOGGER.debug(
             "Account: id: %s, Name %s, parameters %s", a.id, a.full_name, params
@@ -58,32 +36,37 @@ async def _dry_setup(hass, config, add_entities, discovery_info=None):
                     m.unit,
                 )
                 param_added.append(m.parameter)
-                add_entities([MeasurementSensor(a, m)])
-
-
-async def async_setup_platform(
-    hass: HomeAssistant,
-    config: ConfigType,
-    add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None,
-) -> None:
-    await _dry_setup(hass, config, add_entities)
+                async_add_entities([MeasurementSensor(api_coordinator, a, m)])
     return True
 
 
-async def async_setup_entry(hass, config_entry, async_add_devices):
-    """Setup sensor platform for the ui"""
-    config = config_entry.data
-    await _dry_setup(hass, config, async_add_devices)
-    return True
-
-
-class MeasurementSensor(SensorEntity):
+class MeasurementSensor(CoordinatorEntity, SensorEntity):
     """Base class for poollab sensor"""
 
-    def __init__(self, account: poollab.Account, meas: poollab.Measurement) -> None:
+    def __init__(
+        self,
+        coordinator: PoolLabCoordinator,
+        account: poollab.Account,
+        meas: poollab.Measurement,
+    ) -> None:
+        super().__init__(coordinator)
         self._account = account
         self._latest_measurement = meas
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        try:
+            self._latest_measurement = self.coordinator.data.get_measurement(
+                self._account.id, self._latest_measurement.parameter
+            )
+            self.async_write_ha_state()
+        except StopIteration:
+            _LOGGER.error(
+                "Could not find a measurement matching id:%s and parameter:%s",
+                self._account.id,
+                self._latest_measurement.parameter,
+            )
 
     @property
     def _attr_unique_id(self) -> str:
@@ -113,6 +96,10 @@ class MeasurementSensor(SensorEntity):
         return self._latest_measurement.value
 
     @property
+    def _attr_native_unit_of_measurement(self) -> str:
+        return self._latest_measurement.unit.split(" ")[0]
+
+    @property
     def _attr_state_class(self) -> SensorStateClass:
         return SensorStateClass.MEASUREMENT
 
@@ -128,7 +115,3 @@ class MeasurementSensor(SensorEntity):
             "operator_name": self._latest_measurement.operator_name,
             "comment": self._latest_measurement.comment,
         }
-
-    def update(self):
-        """Called from Home Assistant to update entity value"""
-        now = dt.now()

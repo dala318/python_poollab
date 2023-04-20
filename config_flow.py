@@ -1,28 +1,19 @@
 """Config flow for PoolLab integration."""
-from __future__ import annotations
-
-from collections.abc import Mapping
 import logging
+import voluptuous as vol
+from __future__ import annotations
+from collections.abc import Mapping
 from typing import Any
 
 import homeassistant.helpers.config_validation as cv
-import voluptuous as vol
-
 from homeassistant import config_entries
 from homeassistant.const import CONF_API_KEY
 from homeassistant.data_entry_flow import FlowResult
-from homeassistant.exceptions import HomeAssistantError
 
-# from homeassistant.helpers.aiohttp_client import async_get_clientsession
-
-from . import DOMAIN
+from . import DOMAIN, InvalidAuth
 from .lib import poollab
 
 _LOGGER = logging.getLogger(__name__)
-
-
-class InvalidAuth(HomeAssistantError):
-    """Error to indicate there is invalid auth."""
 
 
 class PoolLabConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -63,11 +54,7 @@ class PoolLabConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     )
                     return self.async_abort(reason="reauth_successful")
 
-                return self.async_create_entry(
-                    title="PoolLab",
-                    data=user_input
-                    # title=user_input[CONF_API_KEY], data=user_input
-                )
+                return self.async_create_entry(title="PoolLab", data=user_input)
         elif self._reauth_entry:
             for key in defaults:
                 defaults[key] = self._reauth_entry.data.get(key)
@@ -102,11 +89,6 @@ class PoolLabConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def is_valid(self, user_input):
         """Check for user input errors."""
-
-        # session = async_get_clientsession(self.hass)
-
         poollab_api = poollab.PoolLabApi(user_input[CONF_API_KEY])
         if not await poollab_api.test():
             raise InvalidAuth
-
-        # await test_volvo_data.auth_is_valid()

@@ -1,8 +1,8 @@
-import asyncio
+"""PoolLab API handler"""
 import argparse
-from datetime import datetime
-import json
+import asyncio
 import logging
+from datetime import datetime
 
 from gql import Client, gql
 from gql.transport.aiohttp import AIOHTTPTransport
@@ -60,30 +60,22 @@ logging.basicConfig(level=logging.INFO)
 _LOGGER = logging.getLogger(__name__)
 
 
-# def try_set_attr(key: str, data, target) -> bool:
-#     try:
-#         setattr(target, key, data[key])
-#     except Exception as e:
-#         return False
-#     return True
-
-
 class Measurement(object):
     """Data class for decoded water measurement"""
 
-    id = None
-    scenario = ""
-    parameter = ""
-    unit = ""
-    comment = ""
-    device_serial = ""
-    operator_name = ""
-    value = ""
-    ideal_low = ""
-    ideal_high = ""
-    timestamp = None
-
     def __init__(self, data) -> None:
+        self.id = None
+        self.scenario = ""
+        self.parameter = ""
+        self.unit = ""
+        self.comment = ""
+        self.device_serial = ""
+        self.operator_name = ""
+        self.value = ""
+        self.ideal_low = ""
+        self.ideal_high = ""
+        self.timestamp = None
+
         for key, value in data.items():
             if "timestamp" in key:
                 setattr(self, key, datetime.fromtimestamp(value))
@@ -94,25 +86,24 @@ class Measurement(object):
 class Account(object):
     """Data class for decoded account data"""
 
-    id = None
-    forename = ""
-    surname = ""
-    street = ""
-    zipcode = ""
-    city = ""
-    phone1 = ""
-    phone2 = ""
-    fax = ""
-    email = ""
-    country = ""
-    canton = ""
-    notes = ""
-    volume = ""
-    pooltext = ""
-    gps = ""
-    Measurements = []
-
     def __init__(self, data) -> None:
+        self.id = None
+        self.forename = ""
+        self.surname = ""
+        self.street = ""
+        self.zipcode = ""
+        self.city = ""
+        self.phone1 = ""
+        self.phone2 = ""
+        self.fax = ""
+        self.email = ""
+        self.country = ""
+        self.canton = ""
+        self.notes = ""
+        self.volume = ""
+        self.pooltext = ""
+        self.gps = ""
+        self.Measurements = []
         for key, value in data.items():
             if key == "Measurements":
                 for m in data["Measurements"]:
@@ -136,12 +127,12 @@ class Account(object):
 class WaterTreatmentProduct(object):
     """Data class for decoded water treatment producs"""
 
-    id = None
-    name = ""
-    effect = ""
-    phrase = ""
-
     def __init__(self, data) -> None:
+        self.id = None
+        self.name = ""
+        self.effect = ""
+        self.phrase = ""
+
         for key, value in data.items():
             setattr(self, key, value)
 
@@ -149,16 +140,15 @@ class WaterTreatmentProduct(object):
 class CloudAccount:
     """Master class for PoolLab data"""
 
-    id = None
-    email = ""
-    last_change_time = None
-    last_wtp_change = None
-    Accounts = []
-
     def __init__(self, data) -> None:
+        self.id = None
+        self.email = ""
+        self.last_change_time = None
+        self.last_wtp_change = None
+        self.Accounts = []
+
         if "CloudAccount" in data.keys():
             data = data["CloudAccount"]
-            # try_set_attr('id', data, self)
             for key, value in data.items():
                 if key == "Accounts":
                     for a in data["Accounts"]:
@@ -168,15 +158,22 @@ class CloudAccount:
                 else:
                     setattr(self, key, value)
 
+    def get_measurement(self, account_id: int, meas_param: str):
+        account = next((x for x in self.Accounts if x.id == account_id))
+        sorted_meas = sorted(
+            account.Measurements, key=lambda x: x.timestamp, reverse=True
+        )
+        return next((x for x in sorted_meas if x.parameter == meas_param))
+
 
 class PoolLabApi:
     """Public API class for PoolLab"""
 
     def __init__(self, token: str) -> None:
         self._token = token
-        self._latest_measurement = None
+        self._data = None
 
-    async def _query(self) -> bool:
+    async def update(self) -> bool:
         transport = AIOHTTPTransport(
             url=API_ENDPOINT, headers={"Authorization": self._token}
         )
@@ -186,17 +183,15 @@ class PoolLabApi:
         ) as session:
             query = gql(QUERY_SCHEMA)
             result = await session.execute(query)
-            # _LOGGER.debug(json.dumps(result, indent=2))
-            # _LOGGER.debug(json.dumps(result))
             if result is not None:
-                self._latest_measurement = result
+                self._data = result
                 return True
         return False
 
     async def test(self) -> bool:
         """Testing the cloud data connection"""
         try:
-            if await self._query():
+            if await self.update():
                 return True
         except Exception:
             pass
@@ -204,9 +199,9 @@ class PoolLabApi:
 
     async def request(self) -> CloudAccount:
         """Fetching the cloud data"""
-        await self._query()
-        if self._latest_measurement is not None:
-            return CloudAccount(self._latest_measurement)
+        await self.update()
+        if self._data is not None:
+            return CloudAccount(self._data)
         return None
 
 
