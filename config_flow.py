@@ -1,7 +1,7 @@
 """Config flow for PoolLab integration."""
+from __future__ import annotations
 import logging
 import voluptuous as vol
-from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
