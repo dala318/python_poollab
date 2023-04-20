@@ -113,6 +113,10 @@ class MeasurementSensor(SensorEntity):
         return self._latest_measurement.value
 
     @property
+    def _attr_native_unit_of_measurement(self) -> str:
+        return self._latest_measurement.unit.split(" ")[0]
+
+    @property
     def _attr_state_class(self) -> SensorStateClass:
         return SensorStateClass.MEASUREMENT
 
