@@ -15,17 +15,8 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Setup sensor platform for the ui"""
-    config = config_entry.data
-    # poollab = hass.data[DOMAIN]
-    # await _async_dry_setup(hass, config, async_add_devices)
     api_coordinator = hass.data[DOMAIN][config_entry.entry_id]
     poollab_data = await api_coordinator.api.request()
-
-    # coordinator = MyCoordinator(hass, my_api)
-
-    # api_key = config[CONF_API_KEY]
-    # poollab_api = poollab.PoolLabApi(api_key)
-    # poollab_data = await poollab_api.request()
     for a in poollab_data.Accounts:
         params = list(set([m.parameter for m in a.Measurements]))
         _LOGGER.debug(

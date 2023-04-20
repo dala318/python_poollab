@@ -35,11 +35,11 @@ class PoolLabCoordinator(DataUpdateCoordinator):
             name="PoolLab API",
             # Polling interval. Will only be polled if there are subscribers.
             update_interval=timedelta(seconds=30),
-            update_method=self.update_data,
+            update_method=self._async_update_data,
         )
         self.api = api
 
-    def update_data(self):
+    async def _async_update_data(self):
         """Fetch data from API endpoint.
 
         This is the place to pre-process the data to lookup tables
