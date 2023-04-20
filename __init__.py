@@ -1,7 +1,7 @@
 """Home Assistant integration for cloud API access to PoolLab measuremetns"""
+from __future__ import annotations
 import async_timeout
 import logging
-from __future__ import annotations
 from datetime import timedelta
 from gql.client import TransportQueryError
 

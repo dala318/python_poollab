@@ -1,6 +1,6 @@
 """Sensor integration for PoolLab"""
-import logging
 from __future__ import annotations
+import logging
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.sensor.const import SensorStateClass
