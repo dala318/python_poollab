@@ -1,7 +1,9 @@
+"""Home Assistant integration for cloud API access to PoolLab measuremetns"""
+import async_timeout
+import logging
 from __future__ import annotations
 from datetime import timedelta
-import logging
-import async_timeout
+from gql.client import TransportQueryError
 
 from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
 from homeassistant.const import CONF_API_KEY
@@ -31,37 +33,25 @@ class PoolLabCoordinator(DataUpdateCoordinator):
         super().__init__(
             hass,
             _LOGGER,
-            # Name of the data. For logging purposes.
             name="PoolLab API",
-            # Polling interval. Will only be polled if there are subscribers.
             update_interval=timedelta(seconds=30),
             update_method=self._async_update_data,
         )
         self.api = api
 
     async def _async_update_data(self):
-        """Fetch data from API endpoint.
-
-        This is the place to pre-process the data to lookup tables
-        so entities can quickly look up their data.
-        """
+        """Fetch data from API endpoint."""
         try:
-            # Note: asyncio.TimeoutError and aiohttp.ClientError are already
-            # handled by the data update coordinator.
             async with async_timeout.timeout(10):
-                # Grab active context variables to limit data required to be fetched from API
-                # Note: using context is not required if there is no need or ability to limit
-                # data retrieved from API.
-                listening_idx = set(self.async_contexts())
                 return await self.api.request()
-        except:
-            pass  # TODO: remove
         # except ApiAuthError as err:
-        #     # Raising ConfigEntryAuthFailed will cancel future updates
-        #     # and start a config flow with SOURCE_REAUTH (async_step_reauth)
-        #     raise ConfigEntryAuthFailed from err
-        # except ApiError as err:
-        #     raise UpdateFailed(f"Error communicating with API: {err}")
+        # except GraphQLErroras as err:
+        except TransportQueryError as err:
+            # Raising ConfigEntryAuthFailed will cancel future updates
+            # and start a config flow with SOURCE_REAUTH (async_step_reauth)
+            raise ConfigEntryAuthFailed from err
+        except Exception as err:
+            raise UpdateFailed(f"Unknown error communicating with API: {err}") from err
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
@@ -85,13 +75,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
                 hass.config_entries.async_remove(config_entry.entry_id)
             )
             return False
-        # poollab.configuration.update_from_dict(
-        #     {
-        #         "config_entry": config_entry,
-        #         **config_entry.data,
-        #         **config_entry.options,
-        #     }
-        # )
 
     hass.config_entries.async_setup_platforms(config_entry, PLATFORMS)
     return True

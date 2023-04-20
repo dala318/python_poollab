@@ -1,10 +1,9 @@
-from __future__ import annotations
-
+"""Sensor integration for PoolLab"""
 import logging
+from __future__ import annotations
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.sensor.const import SensorStateClass
-from homeassistant.const import CONF_API_KEY
 from homeassistant.core import callback
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -45,7 +44,6 @@ class MeasurementSensor(CoordinatorEntity, SensorEntity):
     """Base class for poollab sensor"""
 
     def __init__(
-        # self, account: poollab.Account, meas: poollab.Measurement, entry_id: str
         self,
         coordinator: PoolLabCoordinator,
         account: poollab.Account,
@@ -117,7 +115,3 @@ class MeasurementSensor(CoordinatorEntity, SensorEntity):
             "operator_name": self._latest_measurement.operator_name,
             "comment": self._latest_measurement.comment,
         }
-
-    # def update(self):
-    #     """Called from Home Assistant to update entity value"""
-    #     now = dt.now()
