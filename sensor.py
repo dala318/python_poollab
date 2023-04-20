@@ -5,9 +5,11 @@ import logging
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.sensor.const import SensorStateClass
 from homeassistant.const import CONF_API_KEY
+from homeassistant.core import callback
 from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from . import DOMAIN
+from . import DOMAIN, PoolLabCoordinator
 from .lib import poollab
 
 _LOGGER = logging.getLogger(__name__)
@@ -16,8 +18,7 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Setup sensor platform for the ui"""
     api_coordinator = hass.data[DOMAIN][config_entry.entry_id]
-    poollab_data = await api_coordinator.api.request()
-    for a in poollab_data.Accounts:
+    for a in api_coordinator.data.Accounts:
         params = list(set([m.parameter for m in a.Measurements]))
         _LOGGER.debug(
             "Account: id: %s, Name %s, parameters %s", a.id, a.full_name, params
@@ -36,19 +37,38 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
                     m.unit,
                 )
                 param_added.append(m.parameter)
-                async_add_entities([MeasurementSensor(a, m, config_entry.entry_id)])
+                async_add_entities([MeasurementSensor(api_coordinator, a, m)])
     return True
 
 
-class MeasurementSensor(SensorEntity):
+class MeasurementSensor(CoordinatorEntity, SensorEntity):
     """Base class for poollab sensor"""
 
     def __init__(
-        self, account: poollab.Account, meas: poollab.Measurement, entry_id: str
+        # self, account: poollab.Account, meas: poollab.Measurement, entry_id: str
+        self,
+        coordinator: PoolLabCoordinator,
+        account: poollab.Account,
+        meas: poollab.Measurement,
     ) -> None:
+        super().__init__(coordinator)
         self._account = account
         self._latest_measurement = meas
-        self._entry_id = entry_id
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        try:
+            self._latest_measurement = self.coordinator.data.get_measurement(
+                self._account.id, self._latest_measurement.parameter
+            )
+            self.async_write_ha_state()
+        except StopIteration:
+            _LOGGER.error(
+                "Could not find a measurement matching id:%s and parameter:%s",
+                self._account.id,
+                self._latest_measurement.parameter,
+            )
 
     @property
     def _attr_unique_id(self) -> str:

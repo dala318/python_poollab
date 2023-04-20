@@ -168,6 +168,13 @@ class CloudAccount:
                 else:
                     setattr(self, key, value)
 
+    def get_measurement(self, account_id: int, meas_param: str):
+        account = next((x for x in self.Accounts if x.id == account_id))
+        sorted_meas = sorted(
+            account.Measurements, key=lambda x: x.timestamp, reverse=True
+        )
+        return next((x for x in sorted_meas if x.parameter == meas_param))
+
 
 class PoolLabApi:
     """Public API class for PoolLab"""
@@ -176,7 +183,7 @@ class PoolLabApi:
         self._token = token
         self._latest_measurement = None
 
-    async def _query(self) -> bool:
+    async def update(self) -> bool:
         transport = AIOHTTPTransport(
             url=API_ENDPOINT, headers={"Authorization": self._token}
         )
@@ -196,19 +203,15 @@ class PoolLabApi:
     async def test(self) -> bool:
         """Testing the cloud data connection"""
         try:
-            if await self._query():
+            if await self.update():
                 return True
         except Exception:
             pass
         return False
 
-    async def update(self) -> bool:
-        """Fetch data from API and store"""
-        return await self._query()
-
     async def request(self) -> CloudAccount:
         """Fetching the cloud data"""
-        await self._query()
+        await self.update()
         if self._latest_measurement is not None:
             return CloudAccount(self._latest_measurement)
         return None

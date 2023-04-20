@@ -53,7 +53,7 @@ class PoolLabCoordinator(DataUpdateCoordinator):
                 # Note: using context is not required if there is no need or ability to limit
                 # data retrieved from API.
                 listening_idx = set(self.async_contexts())
-                return await self.api.update()
+                return await self.api.request()
         except:
             pass  # TODO: remove
         # except ApiAuthError as err:
@@ -77,6 +77,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
         )
     else:
         poollab = hass.data[DOMAIN][config_entry.entry_id]
+    await poollab.async_config_entry_first_refresh()
+
     if config_entry is not None:
         if config_entry.source == SOURCE_IMPORT:
             hass.async_create_task(
