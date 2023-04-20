@@ -4,7 +4,8 @@ import logging
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.sensor.const import SensorStateClass
-from homeassistant.core import callback
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -14,7 +15,9 @@ from .lib import poollab
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(hass, config_entry, async_add_entities):
+async def async_setup_entry(
+    hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities
+):
     """Setup sensor platform for the ui"""
     api_coordinator = hass.data[DOMAIN][config_entry.entry_id]
     for a in api_coordinator.data.Accounts:
@@ -70,7 +73,8 @@ class MeasurementSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def _attr_unique_id(self) -> str:
-        return "account%s_%s" % (
+        return "%s_account%s_%s" % (
+            self.coordinator.data.id,
             self._account.id,
             self._latest_measurement.parameter.replace(" ", "_")
             .replace("-", "_")
@@ -102,6 +106,10 @@ class MeasurementSensor(CoordinatorEntity, SensorEntity):
     @property
     def _attr_state_class(self) -> SensorStateClass:
         return SensorStateClass.MEASUREMENT
+
+    @property
+    def _attr_icon(self) -> str:
+        return "mdi:water-percent"
 
     @property
     def _attr_extra_state_attributes(self):
