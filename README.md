@@ -24,10 +24,10 @@ For now only fetching all data and parsing to classes.
 ### Entity attributes
 Each sensor entity has the value of the last measurement of each parameter, based on the timestamp from device (not the one stored last)
 In addition some attributes are provided
-* Measured at: The device timestamp at measure
-* Measure: The unique id of the measure
-* Ideal low: Lower limit for ok
-* Ideal high: Upper limit for ok
-* Device serial: Device serial of the device that made the measure
-* Operator name: Mane of operator that did the measurement
-* Comment: Comment to measurement
+* 'Measured at': The device timestamp at measure
+* 'Measure': The unique id of the measure
+* 'Ideal low': Lower limit for ok
+* 'Ideal high': Upper limit for ok
+* 'Device serial': Device serial of the device that made the measure
+* 'Operator name': Mane of operator that did the measurement
+* 'Comment': Comment to measurement
