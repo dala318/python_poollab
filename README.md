@@ -21,6 +21,8 @@ For now only fetching all data and parsing to classes.
 3. In the configuration window enter the API token
 4. Each pool in your account should be shown as an own device which you can add to a room
 
+![Example device](device_integration_example.png)
+
 ### Entity attributes
 Each sensor entity has the value of the last measurement of each parameter, based on the timestamp from device (not the one stored last)
 In addition some attributes are provided
