@@ -19,7 +19,7 @@ For now only fetching all data and parsing to classes.
 1. Get a API token to your cloud data from https://labcom.cloud/pages/user-setting
 2. Klick Add integration and select "poollab"
 3. In the configuration window enter the API token
-4. Each Poll in your account should be shown as an own device which you can add to a room
+4. Each pool in your account should be shown as an own device which you can add to a room
 
 ### Entity attributes
 Each sensor entity has the value of the last measurement of each parameter, based on the timestamp from device (not the one stored last)
