@@ -106,7 +106,13 @@ class MeasurementSensor(CoordinatorEntity, SensorEntity):
     @property
     def _attr_suggested_display_precision(self) -> int:
         try:
-            return (1 if float(self._latest_measurement.value) >= 10 else 2)
+            meas_value = float(self._latest_measurement.value)
+            if meas_value >= 100:
+                return 0
+            elif meas_value >= 10:
+                return 1
+            else:
+                return 2
         except:
             return 1
 
