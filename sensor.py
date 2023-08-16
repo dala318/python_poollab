@@ -104,6 +104,10 @@ class MeasurementSensor(CoordinatorEntity, SensorEntity):
         return self._latest_measurement.unit.split(" ")[0]
 
     @property
+    def _attr_suggested_display_precision(self) -> int:
+        return (1 if self._latest_measurement.value >= 10 else 2)
+
+    @property
     def _attr_state_class(self) -> SensorStateClass:
         return SensorStateClass.MEASUREMENT
 
