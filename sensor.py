@@ -95,6 +95,14 @@ class MeasurementSensor(CoordinatorEntity, SensorEntity):
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_icon = "mdi:water-percent"
         self._attr_native_value = self._latest_measurement.value
+        try:
+            meas_value = float(self._attr_native_value)
+            if meas_value > 1000000:
+                self._attr_native_value = "Over range"
+            if meas_value < 0:
+                self._attr_native_value = "Under range"
+        except:  # noqa: E722
+            pass
         self._attr_extra_state_attributes = {
             "measured_at": self._latest_measurement.timestamp,
             "measure": self._latest_measurement.id,
