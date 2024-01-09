@@ -1,0 +1,18 @@
+{
+    "config": {
+        "title": "PoolLab",
+        "step": {
+            "user": {
+                "title": "PoolLab",
+                "description": "Setup a PoolLab integration, get key from https://labcom.cloud/pages/user-setting",
+                "data": {
+                    "api_key": "API key"
+                }
+            }
+        },
+        "error": {
+            "name_exists": "Name already exists",
+            "invalid_template": "The template is invalid"
+        }
+    }
+}
