@@ -97,6 +97,14 @@ class MeasurementSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def _attr_native_value(self):
+        try:
+            meas_value = float(self._latest_measurement.value)
+            if meas_value > 1000000:
+                return "Over range"
+            if meas_value < 0:
+                return "Under range"
+        except:
+            pass
         return self._latest_measurement.value
 
     @property
