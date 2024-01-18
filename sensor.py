@@ -55,6 +55,11 @@ class MeasurementSensor(CoordinatorEntity, SensorEntity):
         super().__init__(coordinator)
         self._account = account
         self._latest_measurement = meas
+        self._attr_unique_id = "%s_account%s_%s" % (
+            self.coordinator.data.id,
+            self._account.id,
+            self._latest_measurement.parameter.replace(" ", "_").replace("-", "_").lower(),
+        )
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -70,16 +75,6 @@ class MeasurementSensor(CoordinatorEntity, SensorEntity):
                 self._account.id,
                 self._latest_measurement.parameter,
             )
-
-    @property
-    def _attr_unique_id(self) -> str:
-        return "%s_account%s_%s" % (
-            self.coordinator.data.id,
-            self._account.id,
-            self._latest_measurement.parameter.replace(" ", "_")
-            .replace("-", "_")
-            .lower(),
-        )
 
     @property
     def _attr_name(self) -> str:
