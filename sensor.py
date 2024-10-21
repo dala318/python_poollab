@@ -6,6 +6,7 @@ import logging
 
 from homeassistant.components.sensor import SensorEntity, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -94,7 +95,6 @@ class MeasurementSensor(CoordinatorEntity, SensorEntity):
             pass
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_icon = "mdi:water-percent"
-
         self._update_values()
 
     @callback
@@ -118,10 +118,13 @@ class MeasurementSensor(CoordinatorEntity, SensorEntity):
         self._attr_native_value = self._latest_measurement.value
         try:
             meas_value = float(self._attr_native_value)
+            self._attr_native_value = round(
+                meas_value, self._attr_suggested_display_precision
+            )
             if meas_value > 1000000:
-                self._attr_native_value = "Over range"
+                self._attr_native_value = STATE_UNAVAILABLE
             if meas_value < 0:
-                self._attr_native_value = "Under range"
+                self._attr_native_value = STATE_UNAVAILABLE
         except:  # noqa: E722
             pass
         self._attr_extra_state_attributes = {
