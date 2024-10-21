@@ -1,8 +1,9 @@
-"""PoolLab API handler"""
+"""PoolLab API handler."""
+
 import argparse
 import asyncio
-import logging
 from datetime import datetime
+import logging
 
 from gql import Client, gql
 from gql.transport.aiohttp import AIOHTTPTransport
@@ -61,9 +62,10 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class Measurement(object):
-    """Data class for decoded water measurement"""
+    """Data class for decoded water measurement."""
 
     def __init__(self, data) -> None:
+        """Init the measurement object."""
         self.id = None
         self.scenario = ""
         self.parameter = ""
@@ -84,9 +86,10 @@ class Measurement(object):
 
 
 class Account(object):
-    """Data class for decoded account data"""
+    """Data class for decoded account data."""
 
     def __init__(self, data) -> None:
+        """Init the account object."""
         self.id = None
         self.forename = ""
         self.surname = ""
@@ -113,7 +116,7 @@ class Account(object):
 
     @property
     def full_name(self) -> str:
-        """Compiled full name of account"""
+        """Compiled full name of account."""
         _full_name = ""
         if self.forename:
             _full_name += self.forename
@@ -125,9 +128,10 @@ class Account(object):
 
 
 class WaterTreatmentProduct(object):
-    """Data class for decoded water treatment producs"""
+    """Data class for decoded water treatment producs."""
 
     def __init__(self, data) -> None:
+        """Init the water treatment product object."""
         self.id = None
         self.name = ""
         self.effect = ""
@@ -138,16 +142,17 @@ class WaterTreatmentProduct(object):
 
 
 class CloudAccount:
-    """Master class for PoolLab data"""
+    """Master class for PoolLab data."""
 
     def __init__(self, data) -> None:
+        """Init the clound account object."""
         self.id = None
         self.email = ""
         self.last_change_time = None
         self.last_wtp_change = None
         self.Accounts = []
 
-        if "CloudAccount" in data.keys():
+        if "CloudAccount" in data:
             data = data["CloudAccount"]
             for key, value in data.items():
                 if key == "Accounts":
@@ -159,21 +164,24 @@ class CloudAccount:
                     setattr(self, key, value)
 
     def get_measurement(self, account_id: int, meas_param: str):
-        account = next((x for x in self.Accounts if x.id == account_id))
+        """Get a measurement."""
+        account = next(x for x in self.Accounts if x.id == account_id)
         sorted_meas = sorted(
             account.Measurements, key=lambda x: x.timestamp, reverse=True
         )
-        return next((x for x in sorted_meas if x.parameter == meas_param))
+        return next(x for x in sorted_meas if x.parameter == meas_param)
 
 
 class PoolLabApi:
-    """Public API class for PoolLab"""
+    """Public API class for PoolLab."""
 
     def __init__(self, token: str) -> None:
+        """Init the cloud api object."""
         self._token = token
         self._data = None
 
     async def update(self) -> bool:
+        """Update fron the cloud api."""
         transport = AIOHTTPTransport(
             url=API_ENDPOINT, headers={"Authorization": self._token}
         )
@@ -189,16 +197,16 @@ class PoolLabApi:
         return False
 
     async def test(self) -> bool:
-        """Testing the cloud data connection"""
+        """Test the cloud data connection."""
         try:
             if await self.update():
                 return True
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
         return False
 
     async def request(self) -> CloudAccount:
-        """Fetching the cloud data"""
+        """Fetch the cloud data."""
         await self.update()
         if self._data is not None:
             return CloudAccount(self._data)

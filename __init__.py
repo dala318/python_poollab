@@ -1,8 +1,11 @@
-"""Home Assistant integration for cloud API access to PoolLab measuremetns"""
+"""Home Assistant integration for cloud API access to PoolLab measuremetns."""
+
 from __future__ import annotations
-import async_timeout
-import logging
+
+from asyncio import timeouts
 from datetime import timedelta
+import logging
+
 from gql.client import TransportQueryError
 
 from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
@@ -28,7 +31,9 @@ class PoolLabConfigException(HomeAssistantError):
 
 
 class PoolLabCoordinator(DataUpdateCoordinator):
-    def __init__(self, hass, api: PoolLabApi) -> None:
+    """Update coordinator."""
+
+    def __init__(self, hass: HomeAssistant, api: PoolLabApi) -> None:
         """Initialize my coordinator."""
         super().__init__(
             hass,
@@ -42,7 +47,7 @@ class PoolLabCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self):
         """Fetch data from API endpoint."""
         try:
-            async with async_timeout.timeout(10):
+            async with timeouts.timeout(10):
                 return await self.api.request()
         # except ApiAuthError as err:
         # except GraphQLErroras as err:
@@ -81,7 +86,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Unloading a config_flow entry"""
+    """Unloading a config_flow entry."""
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)
