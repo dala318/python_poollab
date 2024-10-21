@@ -130,6 +130,24 @@ class Measurement(object):
             else:
                 setattr(self, key, value)
 
+        self.interpreted_value = None
+        self.interpreted_oor = False
+        if self.value and self.scenario in MEAS_RANGES_BY_SCENARIO:
+            try:
+                value = float(self.value)
+                range_min = MEAS_RANGES_BY_SCENARIO[self.scenario][0]
+                range_max = MEAS_RANGES_BY_SCENARIO[self.scenario][1]
+                if value < range_min:
+                    self.interpreted_value = float(range_min)
+                    self.interpreted_oor = True
+                elif value > range_max:
+                    self.interpreted_value = float(range_max)
+                    self.interpreted_oor = True
+                else:
+                    self.interpreted_value = value
+            except:  # noqa: E722
+                pass
+
 
 class Account(object):
     """Data class for decoded account data."""

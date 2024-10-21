@@ -83,16 +83,15 @@ class MeasurementSensor(CoordinatorEntity, SensorEntity):
         if "pH" not in unit:
             unit = unit.replace("(", "").replace(")", "")
         self._attr_native_unit_of_measurement = unit
-        try:
-            meas_value = float(self._latest_measurement.value)
+        if meas_value := self._latest_measurement.interpreted_value:
             if meas_value >= 100:
                 self._attr_suggested_display_precision = 0
             elif meas_value >= 10:
                 self._attr_suggested_display_precision = 1
             else:
                 self._attr_suggested_display_precision = 2
-        except:  # noqa: E722
-            pass
+        else:
+            self._attr_suggested_display_precision = 1
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_icon = "mdi:water-percent"
         self._update_values()
@@ -116,23 +115,17 @@ class MeasurementSensor(CoordinatorEntity, SensorEntity):
     def _update_values(self) -> None:
         """Set the state and the extra_state attribute values."""
         self._attr_native_value = self._latest_measurement.value
-        try:
-            meas_value = float(self._attr_native_value)
+        if meas_value := self._latest_measurement.interpreted_value:
             self._attr_native_value = round(
                 meas_value, self._attr_suggested_display_precision
             )
-            if meas_value > 1000000:
-                self._attr_native_value = STATE_UNAVAILABLE
-            if meas_value < 0:
-                self._attr_native_value = STATE_UNAVAILABLE
-        except:  # noqa: E722
-            pass
         self._attr_extra_state_attributes = {
             "measured_at": self._latest_measurement.timestamp,
             "measure": self._latest_measurement.id,
             "ideal_low": self._latest_measurement.ideal_low,
             "ideal_high": self._latest_measurement.ideal_high,
             "ideal_status": self._latest_measurement.ideal_status,
+            "value_out_of_range": self._latest_measurement.interpreted_oor,
             "device_serial": self._latest_measurement.device_serial,
             "operator_name": self._latest_measurement.operator_name,
             "comment": self._latest_measurement.comment,
