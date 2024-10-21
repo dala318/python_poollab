@@ -48,6 +48,9 @@ async def async_setup_entry(
 class MeasurementSensor(CoordinatorEntity, SensorEntity):
     """Base class for poollab sensor."""
 
+    _account: poollab.Account
+    _latest_measurement: poollab.Measurement
+
     def __init__(
         self,
         coordinator: PoolLabCoordinator,
