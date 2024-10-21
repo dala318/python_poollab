@@ -32,19 +32,23 @@ CloudAccount {
     canton
     notes
     volume
+    volume_unit
     pooltext
     gps
     Measurements {
       id
       scenario
       parameter
+      parameter_id
       unit
       comment
       device_serial
       operator_name
       value
+      formatted_value
       ideal_low
       ideal_high
+      ideal_status
       timestamp
     }
   }
@@ -54,7 +58,46 @@ CloudAccount {
     effect
     phrase
   }
+#   Scenarios {
+#     scenario_id
+#     Scenario {
+#       id
+#       name
+#       group_id
+#       group
+#       device_type
+#     }
+#   }
 }}"""
+
+# Measurment ranges according to https://poollab.org/static/manuals/poollab_manual_gb-fr-e-d-i.pdf
+MEAS_RANGES_BY_SCENARIO = {
+    # Active oxygene 0-30
+    # (not tested) "PL O₂": [0, 30],
+    # Cyanuric Acid 0-160
+    "431-Cyanuric-Acid": [0, 160],  # "parameter":"PL Cyanuric Acid"
+    # Alkalinity 0-200
+    "430-Total-Alkalinity": [0, 200],  # "parameter":"PL T-Alka"
+    # Bromine (tablet) 0-18 ppm (mg/l)
+    # Bromine (liquid) 0-9 ppm (mg/l)
+    # Calcium Hardness 0-500 ppm (mg/l)
+    # Chlorine (tablet) 0-8 ppm (mg/l)
+    "428-Chlorine-Free": [0, 8],  # "parameter":"PL Chlorine Free"
+    "421-Chlorine-Total": [0, 8],  # "parameter":"PL Chlorine Total"
+    # Chlorine (liquid) 0-4 ppm (mg/l)
+    # Chlorine dioxide (tablet) 0-15 ppm (mg/l)
+    # Chlorine dioxide (liquid) 0-7.6 ppm (mg/l)
+    # LR Hydrogen Peroxide 0-2.9 ppm (mg/l)
+    # HR Hydrogen Peroxide 0-200 ppm (mg/l)
+    # Ozone (tablet) 0-5.4 ppm (mg/l)
+    # Ozone (liquid) 0-2.7 ppm (mg/l)
+    # pH (tablet) 6.5-8.4
+    "429-pH-PoolLab": [6.5, 8.4],  # "parameter":"PL pH"
+    # pH (tablet) 6.5-8.4
+    # PHMB 5-60
+    # Total Hardness 0-500
+    # Urea 0.1-2.5
+}
 
 
 logging.basicConfig(level=logging.INFO)
@@ -69,13 +112,16 @@ class Measurement(object):
         self.id = None
         self.scenario = ""
         self.parameter = ""
+        self.parameter_id = ""
         self.unit = ""
         self.comment = ""
         self.device_serial = ""
         self.operator_name = ""
         self.value = ""
+        self.formatted_value = ""
         self.ideal_low = ""
         self.ideal_high = ""
+        self.ideal_status = ""
         self.timestamp = None
 
         for key, value in data.items():
@@ -104,6 +150,7 @@ class Account(object):
         self.canton = ""
         self.notes = ""
         self.volume = ""
+        self.volume_unit = ""
         self.pooltext = ""
         self.gps = ""
         self.Measurements = []

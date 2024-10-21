@@ -94,6 +94,27 @@ class MeasurementSensor(CoordinatorEntity, SensorEntity):
             pass
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_icon = "mdi:water-percent"
+
+        self._update_values()
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        try:
+            self._latest_measurement = self.coordinator.data.get_measurement(
+                self._account.id, self._latest_measurement.parameter
+            )
+            self._update_values()
+            self.async_write_ha_state()
+        except StopIteration:
+            _LOGGER.error(
+                "Could not find a measurement matching id:%s and parameter:%s",
+                self._account.id,
+                self._latest_measurement.parameter,
+            )
+
+    def _update_values(self) -> None:
+        """Set the state and the extra_state attribute values."""
         self._attr_native_value = self._latest_measurement.value
         try:
             meas_value = float(self._attr_native_value)
@@ -108,32 +129,8 @@ class MeasurementSensor(CoordinatorEntity, SensorEntity):
             "measure": self._latest_measurement.id,
             "ideal_low": self._latest_measurement.ideal_low,
             "ideal_high": self._latest_measurement.ideal_high,
+            "ideal_status": self._latest_measurement.ideal_status,
             "device_serial": self._latest_measurement.device_serial,
             "operator_name": self._latest_measurement.operator_name,
             "comment": self._latest_measurement.comment,
         }
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        """Handle updated data from the coordinator."""
-        try:
-            self._latest_measurement = self.coordinator.data.get_measurement(
-                self._account.id, self._latest_measurement.parameter
-            )
-            self._attr_native_value = self._latest_measurement.value
-            self._attr_extra_state_attributes = {
-                "measured_at": self._latest_measurement.timestamp,
-                "measure": self._latest_measurement.id,
-                "ideal_low": self._latest_measurement.ideal_low,
-                "ideal_high": self._latest_measurement.ideal_high,
-                "device_serial": self._latest_measurement.device_serial,
-                "operator_name": self._latest_measurement.operator_name,
-                "comment": self._latest_measurement.comment,
-            }
-            self.async_write_ha_state()
-        except StopIteration:
-            _LOGGER.error(
-                "Could not find a measurement matching id:%s and parameter:%s",
-                self._account.id,
-                self._latest_measurement.parameter,
-            )
