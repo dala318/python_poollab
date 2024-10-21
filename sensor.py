@@ -129,4 +129,6 @@ class MeasurementSensor(CoordinatorEntity, SensorEntity):
             "device_serial": self._latest_measurement.device_serial,
             "operator_name": self._latest_measurement.operator_name,
             "comment": self._latest_measurement.comment,
+            "parameter": self._latest_measurement.parameter,
+            "scenario": self._latest_measurement.scenario,
         }
