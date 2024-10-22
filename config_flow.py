@@ -18,6 +18,10 @@ from .lib import poollab
 
 _LOGGER = logging.getLogger(__name__)
 
+PLACEHOLDERS = {
+    CONF_API_KEY: "API key",
+}
+
 
 class PoolLabConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """PoolLab config flow."""
@@ -67,15 +71,49 @@ class PoolLabConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required(CONF_API_KEY, default=None): cv.string,
             }
         )
-
-        placeholders = {
-            CONF_API_KEY: "API key",
-        }
-
         return self.async_show_form(
             step_id="user",
             data_schema=user_schema,
-            description_placeholders=placeholders,
+            description_placeholders=PLACEHOLDERS,
+            errors=errors,
+        )
+
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Handle user reconfiguration step."""
+        errors = {}
+
+        config_entry = self.hass.config_entries.async_get_entry(
+            self.context["entry_id"]
+        )
+        if config_entry is None:
+            return self.async_abort(reason="reconfigure_failed")
+
+        if user_input is not None:
+            try:
+                await self.is_valid(user_input)
+            except InvalidAuth:
+                errors["base"] = "invalid_auth"
+            except Exception:  # pylint: disable=broad-except
+                _LOGGER.exception("Unhandled exception in user step")
+                errors["base"] = "unknown"
+            if not errors:
+                return self.async_update_reload_and_abort(
+                    config_entry,
+                    data=user_input,
+                )
+
+        default_api_key = config_entry.data.get(CONF_API_KEY) or None
+        user_schema = vol.Schema(
+            {
+                vol.Required(CONF_API_KEY, default=default_api_key): cv.string,
+            }
+        )
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=user_schema,
+            description_placeholders=PLACEHOLDERS,
             errors=errors,
         )
 
