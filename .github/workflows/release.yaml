@@ -21,15 +21,15 @@ jobs:
         shell: "bash"
         run: |
           yq -i -o json '.version="${{ github.event.release.tag_name }}"' \
-            "${{ github.workspace }}/manifest.json"
+            "${{ github.workspace }}/custom_components/poollab/manifest.json"
 
       - name: "ZIP the integration directory"
         shell: "bash"
         run: |
-          cd "${{ github.workspace }}"
-          zip python_poollab.zip -r ./
+          cd "${{ github.workspace }}/custom_components/poollab"
+          zip poollab.zip -r ./
 
       - name: "Upload the ZIP file to the release"
         uses: softprops/action-gh-release@v2.0.8
         with:
-          files: ${{ github.workspace }}python_poollab.zip
+          files: ${{ github.workspace }}/custom_components/poollab/poollab.zip
