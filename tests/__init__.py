@@ -1,1 +1,1 @@
-"""Tests for EV Load Balancing."""
+"""Tests for PoolLab."""
