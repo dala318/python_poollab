@@ -6,13 +6,12 @@ import logging
 
 from homeassistant.components.sensor import SensorEntity, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import DOMAIN, PoolLabCoordinator
-from .lib import poollab
+from .poollab import Account, Measurement
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -49,14 +48,14 @@ async def async_setup_entry(
 class MeasurementSensor(CoordinatorEntity, SensorEntity):
     """Base class for poollab sensor."""
 
-    _account: poollab.Account
-    _latest_measurement: poollab.Measurement
+    _account: Account
+    _latest_measurement: Measurement
 
     def __init__(
         self,
         coordinator: PoolLabCoordinator,
-        account: poollab.Account,
-        meas: poollab.Measurement,
+        account: Account,
+        meas: Measurement,
     ) -> None:
         """Init sensor entity."""
         super().__init__(coordinator)
