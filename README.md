@@ -4,7 +4,7 @@ Python API for Pool Lab 1.0
 For now only fetching all data and parsing to classes.
 
 ## Stand-alone usage
-You only need the file `custom_components/poollab/poollab.py`
+You only need the file [poollab.py](custom_components/poollab/poollab.py)
 
 ```python
 from poollab import PoolLabApi
