@@ -22,6 +22,12 @@ PLACEHOLDERS = {
     CONF_API_KEY: "API key",
 }
 
+DATA_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_API_KEY, default=None): cv.string,
+    }
+)
+
 
 class PoolLabConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """PoolLab config flow."""
@@ -66,14 +72,9 @@ class PoolLabConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             for key in defaults:
                 defaults[key] = self._reauth_entry.data.get(key)
 
-        user_schema = vol.Schema(
-            {
-                vol.Required(CONF_API_KEY, default=None): cv.string,
-            }
-        )
         return self.async_show_form(
             step_id="user",
-            data_schema=user_schema,
+            data_schema=DATA_SCHEMA,
             description_placeholders=PLACEHOLDERS,
             errors=errors,
         )

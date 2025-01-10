@@ -19,7 +19,8 @@ from homeassistant.const import ATTR_NAME
 
 # from homeassistant.components import sensor
 # from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+# from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.core import HomeAssistant
 
 NAME = "My balancer"
 
@@ -40,9 +41,9 @@ CONF_ENTRY = config_entries.ConfigEntry(
 
 
 @pytest.mark.asyncio
-async def test_coordinator_init(hass):
+async def test_coordinator_init(hass: HomeAssistant) -> None:
     """Test the coordinator initialization."""
 
     coordinator = PoolLabCoordinator(hass, PoolLabApi("API_TOKEN"))
 
-    # assert coordinator.name == NAME
+    assert coordinator.name == "PoolLab API"
