@@ -2,8 +2,7 @@
 
 from unittest import mock
 
-from custom_components.ev_load_balancing import EvLoadBalancingCoordinator
-
+# from custom_components.poollab.poollab import PoolLabApi
 # from pytest_homeassistant_custom_component.async_mock import patch
 # from pytest_homeassistant_custom_component.common import (
 #     MockModule,
@@ -11,11 +10,12 @@ from custom_components.ev_load_balancing import EvLoadBalancingCoordinator
 #     mock_integration,
 #     mock_platform,
 # )
-from custom_components.poollab import DOMAIN
+from custom_components.poollab import DOMAIN, PoolLabCoordinator
+from custom_components.poollab.poollab import PoolLabApi
 import pytest
 
 from homeassistant import config_entries
-from homeassistant.const import ATTR_NAME, ATTR_UNIT_OF_MEASUREMENT
+from homeassistant.const import ATTR_NAME
 
 # from homeassistant.components import sensor
 # from homeassistant.core import HomeAssistant
@@ -43,6 +43,6 @@ CONF_ENTRY = config_entries.ConfigEntry(
 async def test_coordinator_init(hass):
     """Test the coordinator initialization."""
 
-    # coordinator = EvLoadBalancingCoordinator(hass, CONF_ENTRY)
+    coordinator = PoolLabCoordinator(hass, PoolLabApi("API_TOKEN"))
 
     # assert coordinator.name == NAME
