@@ -1,8 +1,8 @@
-"""Home Assistant integration for cloud API access to PoolLab measuremetns."""
+"""Home Assistant integration for cloud API access to PoolLab measurements."""
 
 from __future__ import annotations
 
-from asyncio import timeouts
+import asyncio
 from datetime import timedelta
 import logging
 
@@ -14,7 +14,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .lib.poollab import PoolLabApi
+from .poollab import PoolLabApi
 
 DOMAIN = "poollab"
 PLATFORMS = ["sensor"]
@@ -31,7 +31,7 @@ class PoolLabConfigException(HomeAssistantError):
 
 
 class PoolLabCoordinator(DataUpdateCoordinator):
-    """Update coordinator."""
+    """Coordinator for the PoolLab API."""
 
     def __init__(self, hass: HomeAssistant, api: PoolLabApi) -> None:
         """Initialize my coordinator."""
@@ -47,10 +47,8 @@ class PoolLabCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self):
         """Fetch data from API endpoint."""
         try:
-            async with timeouts.timeout(10):
+            async with asyncio.timeout(10):
                 return await self.api.request()
-        # except ApiAuthError as err:
-        # except GraphQLErroras as err:
         except TransportQueryError as err:
             # Raising ConfigEntryAuthFailed will cancel future updates
             # and start a config flow with SOURCE_REAUTH (async_step_reauth)
