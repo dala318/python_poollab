@@ -1,9 +1,6 @@
 """PoolLab API handler."""
 
-import argparse
-import asyncio
 from datetime import datetime
-import logging
 
 from gql import Client, gql
 from gql.transport.aiohttp import AIOHTTPTransport
@@ -98,10 +95,6 @@ MEAS_RANGES_BY_SCENARIO = {
     # Total Hardness 0-500
     # Urea 0.1-2.5
 }
-
-
-logging.basicConfig(level=logging.INFO)
-_LOGGER = logging.getLogger(__name__)
 
 
 class Measurement(object):
@@ -276,17 +269,3 @@ class PoolLabApi:
         if self._data is not None:
             return CloudAccount(self._data)
         return None
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Read all data from cloud API")
-    parser.add_argument(
-        "-t",
-        action="store",
-        dest="token",
-        required=True,
-        help="API token (get from https://labcom.cloud/pages/user-setting)",
-    )
-    arg_result = parser.parse_args()
-    poollab_api = PoolLabApi(arg_result.token)
-    _LOGGER.info(asyncio.run(poollab_api.request()))

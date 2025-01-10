@@ -4,7 +4,13 @@ Python API for Pool Lab 1.0
 For now only fetching all data and parsing to classes.
 
 ## Stand-alone usage
-`$ python main.py -t "API_TOKEN_FROM_https://labcom.cloud/pages/user-setting"`
+You only need the file `custom_components/poollab/poollab.py`
+
+```python
+from poollab import PoolLabApi
+poollab_api = PoolLabApi("API_TOKEN_FROM_https://labcom.cloud/pages/user-setting")
+print(asyncio.run(poollab_api.request()))
+```
 
 ## Home Assistant integration
 

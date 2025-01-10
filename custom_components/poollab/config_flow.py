@@ -14,7 +14,7 @@ from homeassistant.data_entry_flow import FlowResult
 import homeassistant.helpers.config_validation as cv
 
 from . import DOMAIN, InvalidAuth
-from .lib import poollab
+from .poollab import PoolLabApi
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -130,6 +130,6 @@ class PoolLabConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def is_valid(self, user_input):
         """Check for user input errors."""
-        poollab_api = poollab.PoolLabApi(user_input[CONF_API_KEY])
+        poollab_api = PoolLabApi(user_input[CONF_API_KEY])
         if not await poollab_api.test():
             raise InvalidAuth
