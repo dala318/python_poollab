@@ -1,6 +1,7 @@
 """PoolLab API handler."""
 
 from datetime import datetime
+from typing import Any
 
 from gql import Client, gql
 from gql.transport.aiohttp import AIOHTTPTransport
@@ -67,7 +68,7 @@ CloudAccount {
 #   }
 }}"""
 
-# Measurment ranges according to https://poollab.org/static/manuals/poollab_manual_gb-fr-e-d-i.pdf
+# Measurement ranges according to https://poollab.org/static/manuals/poollab_manual_gb-fr-e-d-i.pdf
 MEAS_RANGES_BY_SCENARIO = {
     # Active oxygene 0-30
     # (not tested) "PL O₂": [0, 30],
@@ -115,7 +116,7 @@ class Measurement(object):
     ideal_status = ""
     timestamp = None
 
-    def __init__(self, data) -> None:
+    def __init__(self, data: dict[str, Any]) -> None:
         """Init the measurement object."""
         for key, value in data.items():
             if "timestamp" in key:
@@ -141,6 +142,17 @@ class Measurement(object):
             except:  # noqa: E722
                 pass
 
+    @staticmethod
+    def get_schema(indent: str) -> str:
+        """Return the schema for the measurement object."""
+        schema = ""
+        for attribute in Measurement.__dict__:
+            if attribute[:2] != "__":
+                value = getattr(Measurement, attribute)
+                if not callable(value):
+                    schema += indent + str(attribute) + "\n"
+        return schema
+
 
 class Account(object):
     """Data class for decoded account data."""
@@ -164,7 +176,7 @@ class Account(object):
     gps = ""
     Measurements = []
 
-    def __init__(self, data) -> None:
+    def __init__(self, data: dict[str, Any]) -> None:
         """Init the account object."""
         for key, value in data.items():
             if key == "Measurements":
@@ -185,20 +197,49 @@ class Account(object):
             _full_name += self.surname
         return _full_name
 
+    @staticmethod
+    def get_schema(indent: str) -> str:
+        """Return the schema for the account object."""
+        schema = ""
+        for attribute in Account.__dict__:
+            if attribute[:2] != "__":
+                value = getattr(Account, attribute)
+                if not callable(value):
+                    if attribute == "Measurements":
+                        schema += indent + "Measurements {\n"
+                        schema += Measurement.get_schema(indent + "  ")
+                        schema += indent + "}\n"
+                    elif attribute == "full_name":
+                        pass
+                    else:
+                        schema += indent + str(attribute) + "\n"
+        return schema
+
 
 class WaterTreatmentProduct(object):
-    """Data class for decoded water treatment producs."""
+    """Data class for decoded water treatment products."""
 
     id = None
     name = ""
     effect = ""
     phrase = ""
 
-    def __init__(self, data) -> None:
+    def __init__(self, data: dict[str, Any]) -> None:
         """Init the water treatment product object."""
 
         for key, value in data.items():
             setattr(self, key, value)
+
+    @staticmethod
+    def get_schema(indent: str) -> str:
+        """Return the schema for the water treatment product object."""
+        schema = ""
+        for attribute in WaterTreatmentProduct.__dict__:
+            if attribute[:2] != "__":
+                value = getattr(WaterTreatmentProduct, attribute)
+                if not callable(value):
+                    schema += indent + str(attribute) + "\n"
+        return schema
 
 
 class CloudAccount:
@@ -211,16 +252,16 @@ class CloudAccount:
     Accounts = []
     WaterTreatmentProducts = []
 
-    def __init__(self, data) -> None:
+    def __init__(self, data: dict[str, Any]) -> None:
         """Init the clound account object."""
 
-        if "CloudAccount" in data:
-            data = data["CloudAccount"]
+        if data := data.get("CloudAccount"):
+            # data = data["CloudAccount"]
             for key, value in data.items():
                 if key == "Accounts":
                     for a in data["Accounts"]:
                         self.Accounts.append(Account(a))
-                if key == "WaterTreatmentProducts":
+                elif key == "WaterTreatmentProducts":
                     for w in data["WaterTreatmentProducts"]:
                         self.WaterTreatmentProducts.append(WaterTreatmentProduct(w))
                 elif "last" in key:
@@ -236,6 +277,26 @@ class CloudAccount:
         )
         return next(x for x in sorted_meas if x.parameter == meas_param)
 
+    @staticmethod
+    def get_schema(indent: str) -> str:
+        """Return the schema for the cloud account object."""
+        schema = ""
+        for attribute in CloudAccount.__dict__:
+            if attribute[:2] != "__":
+                value = getattr(CloudAccount, attribute)
+                if not callable(value):
+                    if attribute == "Accounts":
+                        schema += indent + "Accounts {\n"
+                        schema += Account.get_schema(indent + "  ")
+                        schema += indent + "}\n"
+                    elif attribute == "WaterTreatmentProducts":
+                        schema += indent + "WaterTreatmentProducts {\n"
+                        schema += WaterTreatmentProduct.get_schema(indent + "  ")
+                        schema += indent + "}\n"
+                    else:
+                        schema += indent + str(attribute) + "\n"
+        return schema
+
 
 class PoolLabApi:
     """Public API class for PoolLab."""
@@ -245,8 +306,18 @@ class PoolLabApi:
         self._token = token
         self._data = None
 
-    async def update(self, schema: str = QUERY_SCHEMA) -> bool:
-        """Update fron the cloud api."""
+    def _build_schema(self) -> str:
+        schema = "\n"
+        schema += "query getContinents {\n"
+        schema += "CloudAccount {\n"
+        schema += CloudAccount.get_schema("  ")
+        schema += "}}"
+        return schema
+
+    async def _update(self, schema: str | None = None) -> bool:
+        """Update from the cloud api."""
+        if schema is None:
+            schema = self._build_schema()
         transport = AIOHTTPTransport(
             url=API_ENDPOINT, headers={"Authorization": self._token}
         )
@@ -264,15 +335,15 @@ class PoolLabApi:
     async def test(self) -> bool:
         """Test the cloud data connection."""
         try:
-            if await self.update():
+            if await self._update():
                 return True
         except Exception:  # noqa: BLE001
             pass
         return False
 
-    async def request(self, schema: str = QUERY_SCHEMA) -> CloudAccount:
+    async def request(self, schema: str | None = None) -> CloudAccount:
         """Fetch the cloud data."""
-        await self.update(schema)
+        await self._update(schema)
         if self._data is not None:
             return CloudAccount(self._data)
         return None

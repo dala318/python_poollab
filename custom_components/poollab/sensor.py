@@ -20,7 +20,7 @@ async def async_setup_entry(
     hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities
 ):
     """Setups sensor platform for the ui."""
-    api_coordinator = hass.data[DOMAIN][config_entry.entry_id]
+    api_coordinator: PoolLabCoordinator = hass.data[DOMAIN][config_entry.entry_id]
     for a in api_coordinator.data.Accounts:
         # params = list(set([m.parameter for m in a.Measurements]))
         params = list({m.parameter for m in a.Measurements})
