@@ -15,7 +15,7 @@ CloudAccount {
   last_change_time
   last_wtp_change
   Accounts {
-  id
+    id
     forename
     surname
     street
@@ -100,23 +100,23 @@ MEAS_RANGES_BY_SCENARIO = {
 class Measurement(object):
     """Data class for decoded water measurement."""
 
+    id = None
+    scenario = ""
+    parameter = ""
+    parameter_id = ""
+    unit = ""
+    comment = ""
+    device_serial = ""
+    operator_name = ""
+    value = ""
+    formatted_value = ""
+    ideal_low = ""
+    ideal_high = ""
+    ideal_status = ""
+    timestamp = None
+
     def __init__(self, data) -> None:
         """Init the measurement object."""
-        self.id = None
-        self.scenario = ""
-        self.parameter = ""
-        self.parameter_id = ""
-        self.unit = ""
-        self.comment = ""
-        self.device_serial = ""
-        self.operator_name = ""
-        self.value = ""
-        self.formatted_value = ""
-        self.ideal_low = ""
-        self.ideal_high = ""
-        self.ideal_status = ""
-        self.timestamp = None
-
         for key, value in data.items():
             if "timestamp" in key:
                 setattr(self, key, datetime.fromtimestamp(value))
@@ -145,26 +145,27 @@ class Measurement(object):
 class Account(object):
     """Data class for decoded account data."""
 
+    id = None
+    forename = ""
+    surname = ""
+    street = ""
+    zipcode = ""
+    city = ""
+    phone1 = ""
+    phone2 = ""
+    fax = ""
+    email = ""
+    country = ""
+    canton = ""
+    notes = ""
+    volume = ""
+    volume_unit = ""
+    pooltext = ""
+    gps = ""
+    Measurements = []
+
     def __init__(self, data) -> None:
         """Init the account object."""
-        self.id = None
-        self.forename = ""
-        self.surname = ""
-        self.street = ""
-        self.zipcode = ""
-        self.city = ""
-        self.phone1 = ""
-        self.phone2 = ""
-        self.fax = ""
-        self.email = ""
-        self.country = ""
-        self.canton = ""
-        self.notes = ""
-        self.volume = ""
-        self.volume_unit = ""
-        self.pooltext = ""
-        self.gps = ""
-        self.Measurements = []
         for key, value in data.items():
             if key == "Measurements":
                 for m in data["Measurements"]:
@@ -188,12 +189,13 @@ class Account(object):
 class WaterTreatmentProduct(object):
     """Data class for decoded water treatment producs."""
 
+    id = None
+    name = ""
+    effect = ""
+    phrase = ""
+
     def __init__(self, data) -> None:
         """Init the water treatment product object."""
-        self.id = None
-        self.name = ""
-        self.effect = ""
-        self.phrase = ""
 
         for key, value in data.items():
             setattr(self, key, value)
@@ -202,13 +204,15 @@ class WaterTreatmentProduct(object):
 class CloudAccount:
     """Master class for PoolLab data."""
 
+    id = None
+    email = ""
+    last_change_time = None
+    last_wtp_change = None
+    Accounts = []
+    WaterTreatmentProducts = []
+
     def __init__(self, data) -> None:
         """Init the clound account object."""
-        self.id = None
-        self.email = ""
-        self.last_change_time = None
-        self.last_wtp_change = None
-        self.Accounts = []
 
         if "CloudAccount" in data:
             data = data["CloudAccount"]
@@ -216,6 +220,9 @@ class CloudAccount:
                 if key == "Accounts":
                     for a in data["Accounts"]:
                         self.Accounts.append(Account(a))
+                if key == "WaterTreatmentProducts":
+                    for w in data["WaterTreatmentProducts"]:
+                        self.WaterTreatmentProducts.append(WaterTreatmentProduct(w))
                 elif "last" in key:
                     setattr(self, key, datetime.fromtimestamp(value))
                 else:
