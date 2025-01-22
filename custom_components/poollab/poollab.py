@@ -238,7 +238,7 @@ class PoolLabApi:
         self._token = token
         self._data = None
 
-    async def update(self) -> bool:
+    async def update(self, schema: str = QUERY_SCHEMA) -> bool:
         """Update fron the cloud api."""
         transport = AIOHTTPTransport(
             url=API_ENDPOINT, headers={"Authorization": self._token}
@@ -247,7 +247,7 @@ class PoolLabApi:
             transport=transport,
             fetch_schema_from_transport=False,  # Only for building GQL
         ) as session:
-            query = gql(QUERY_SCHEMA)
+            query = gql(schema)
             result = await session.execute(query)
             if result is not None:
                 self._data = result
@@ -263,9 +263,9 @@ class PoolLabApi:
             pass
         return False
 
-    async def request(self) -> CloudAccount:
+    async def request(self, schema: str = QUERY_SCHEMA) -> CloudAccount:
         """Fetch the cloud data."""
-        await self.update()
+        await self.update(schema)
         if self._data is not None:
             return CloudAccount(self._data)
         return None
