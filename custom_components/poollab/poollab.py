@@ -8,66 +8,6 @@ from gql.transport.aiohttp import AIOHTTPTransport
 
 API_ENDPOINT = "https://backend.labcom.cloud/graphql"
 
-QUERY_SCHEMA = """
-query getContinents {
-CloudAccount {
-  id
-  email
-  last_change_time
-  last_wtp_change
-  Accounts {
-    id
-    forename
-    surname
-    street
-    zipcode
-    city
-    phone1
-    phone2
-    fax
-    email
-    country
-    canton
-    notes
-    volume
-    volume_unit
-    pooltext
-    gps
-    Measurements {
-      id
-      scenario
-      parameter
-      parameter_id
-      unit
-      comment
-      device_serial
-      operator_name
-      value
-      formatted_value
-      ideal_low
-      ideal_high
-      ideal_status
-      timestamp
-    }
-  }
-  WaterTreatmentProducts {
-    id
-    name
-    effect
-    phrase
-  }
-#   Scenarios {
-#     scenario_id
-#     Scenario {
-#       id
-#       name
-#       group_id
-#       group
-#       device_type
-#     }
-#   }
-}}"""
-
 # Measurement ranges according to https://poollab.org/static/manuals/poollab_manual_gb-fr-e-d-i.pdf
 MEAS_RANGES_BY_SCENARIO = {
     # Active oxygene 0-30
