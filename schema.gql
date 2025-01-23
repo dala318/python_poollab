@@ -8,35 +8,35 @@ query getContinents {
       id
       forename
       surname
-      street
-      zipcode
-      city
-      phone1
-      phone2
-      fax
-      email
-      country
-      canton
-      notes
-      volume
-      volume_unit
-      pooltext
-      gps
+      # street
+      # zipcode
+      # city
+      # phone1
+      # phone2
+      # fax
+      # email
+      # country
+      # canton
+      # notes
+      # volume
+      # volume_unit
+      # pooltext
+      # gps
       Measurements {
         id
         scenario
         parameter
         parameter_id
         unit
-        comment
-        device_serial
-        operator_name
-        value
-        formatted_value
-        ideal_low
-        ideal_high
-        ideal_status
-        timestamp
+        # comment
+        # device_serial
+        # operator_name
+        # value
+        # formatted_value
+        # ideal_low
+        # ideal_high
+        # ideal_status
+        # timestamp
       }
     }
     WaterTreatmentProducts {
@@ -45,15 +45,16 @@ query getContinents {
       effect
       phrase
     }
-    #   Scenarios {
-    #     scenario_id
-    #     Scenario {
-    #       id
-    #       name
-    #       group_id
-    #       group
-    #       device_type
-    #     }
-    #   }
+
+  }
+  Scenarios {
+    scenario_id
+    Scenario {
+      id
+      name
+      group_id
+      group
+      device_type
+    }
   }
 }
