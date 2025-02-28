@@ -39,7 +39,7 @@ class PoolLabCoordinator(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name="PoolLab API",
-            update_interval=timedelta(seconds=30),
+            update_interval=timedelta(seconds=60),
             update_method=self._async_update_data,
         )
         self.api = api
