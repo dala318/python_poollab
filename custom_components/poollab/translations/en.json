@@ -5,7 +5,8 @@
                 "title": "PoolLab",
                 "description": "Setup a PoolLab integration, get key from https://labcom.cloud/pages/user-setting",
                 "data": {
-                    "api_key": "API key"
+                    "api_key": "API key",
+                    "url": "API endpoint URL"
                 }
             }
         },

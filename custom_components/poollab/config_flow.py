@@ -9,24 +9,25 @@ from typing import Any
 import voluptuous as vol
 
 from homeassistant import config_entries
-from homeassistant.const import CONF_API_KEY
+from homeassistant.const import CONF_API_KEY, CONF_URL
 from homeassistant.data_entry_flow import FlowResult
 import homeassistant.helpers.config_validation as cv
 
 from . import DOMAIN, InvalidAuth
-from .poollab import PoolLabApi
+from .poollab import PoolLabApi, API_ENDPOINT
 
 _LOGGER = logging.getLogger(__name__)
 
 PLACEHOLDERS = {
     CONF_API_KEY: "API key",
+    CONF_URL: "API endpoint URL",
 }
 
 
 class PoolLabConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """PoolLab config flow."""
 
-    VERSION = 1
+    VERSION = 2
     _reauth_entry: config_entries.ConfigEntry | None = None
 
     async def async_step_user(
@@ -36,6 +37,7 @@ class PoolLabConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors = {}
         defaults = {
             CONF_API_KEY: "",
+            CONF_URL: API_ENDPOINT,
         }
 
         if user_input is not None:
@@ -69,6 +71,7 @@ class PoolLabConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         user_schema = vol.Schema(
             {
                 vol.Required(CONF_API_KEY, default=None): cv.string,
+                vol.Optional(CONF_URL, default=API_ENDPOINT): cv.string,
             }
         )
         return self.async_show_form(
@@ -105,9 +108,11 @@ class PoolLabConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 )
 
         default_api_key = config_entry.data.get(CONF_API_KEY) or None
+        default_url = config_entry.data.get(CONF_URL) or API_ENDPOINT
         user_schema = vol.Schema(
             {
                 vol.Required(CONF_API_KEY, default=default_api_key): cv.string,
+                vol.Optional(CONF_URL, default=default_url): cv.string,
             }
         )
         return self.async_show_form(
@@ -130,6 +135,6 @@ class PoolLabConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def is_valid(self, user_input):
         """Check for user input errors."""
-        poollab_api = PoolLabApi(user_input[CONF_API_KEY])
+        poollab_api = PoolLabApi(token = user_input[CONF_API_KEY], url = user_input[CONF_URL])
         if not await poollab_api.test():
             raise InvalidAuth
