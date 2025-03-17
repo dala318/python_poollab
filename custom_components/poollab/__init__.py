@@ -66,7 +66,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
 
     if config_entry.entry_id not in hass.data[DOMAIN]:
         hass.data[DOMAIN][config_entry.entry_id] = poollab = PoolLabCoordinator(
-            hass, PoolLabApi(key = config_entry.data[CONF_API_KEY], url=config_entry.data[CONF_URL])
+            hass, PoolLabApi(token = config_entry.data[CONF_API_KEY], url=config_entry.data[CONF_URL])
         )
     else:
         poollab = hass.data[DOMAIN][config_entry.entry_id]
