@@ -14,7 +14,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .poollab import PoolLabApi
+from .poollab import API_ENDPOINT, PoolLabApi
 
 DOMAIN = "poollab"
 PLATFORMS = ["sensor"]
@@ -66,7 +66,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
 
     if config_entry.entry_id not in hass.data[DOMAIN]:
         hass.data[DOMAIN][config_entry.entry_id] = poollab = PoolLabCoordinator(
-            hass, PoolLabApi(token = config_entry.data[CONF_API_KEY], url=config_entry.data[CONF_URL])
+            hass,
+            PoolLabApi(
+                token=config_entry.data[CONF_API_KEY], url=config_entry.data[CONF_URL]
+            ),
         )
     else:
         poollab = hass.data[DOMAIN][config_entry.entry_id]
@@ -92,19 +95,21 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 
 async def async_reload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> None:
-    """Reload the HACS config entry."""
-    await async_unload_entry(hass, config_entry)
-    await async_setup_entry(hass, config_entry)
+    """Reload the config entry when it changed."""
+    await hass.config_entries.async_reload(config_entry.entry_id)
+
 
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Migrate old entry."""
     version = config_entry.version
     _LOGGER.debug("Migrating from version %s", version)
 
+    new_data = {**config_entry.data}
+
     if version == 1:
         config_entry.version = 2
-        config_entry.data[CONF_URL] = PoolLabApi.API_ENDPOINT
-        hass.config_entries.async_update_entry(config_entry, data=config_entry.data)
+        new_data[CONF_URL] = API_ENDPOINT
+        hass.config_entries.async_update_entry(config_entry, data=new_data)
         _LOGGER.info("Migration to version %s successful", config_entry.version)
         return True
 
