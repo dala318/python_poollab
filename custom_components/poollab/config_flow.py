@@ -70,8 +70,12 @@ class PoolLabConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         user_schema = vol.Schema(
             {
-                vol.Required(CONF_API_KEY, default=None): cv.string,
-                vol.Optional(CONF_URL, default=API_ENDPOINT): cv.string,
+                vol.Required(
+                    CONF_API_KEY, default=defaults.get(CONF_API_KEY)
+                ): cv.string,
+                vol.Optional(
+                    CONF_URL, default=defaults.get(CONF_URL, API_ENDPOINT)
+                ): cv.string,
             }
         )
         return self.async_show_form(
