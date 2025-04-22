@@ -41,20 +41,20 @@ MEAS_RANGES_BY_SCENARIO = {
 class Measurement(object):
     """Data class for decoded water measurement."""
 
-    id = None
-    scenario = ""
-    parameter = ""
-    parameter_id = ""
-    unit = ""
-    comment = ""
-    device_serial = ""
-    operator_name = ""
-    value = ""
-    formatted_value = ""
-    ideal_low = ""
-    ideal_high = ""
-    ideal_status = ""
-    timestamp = None
+    id: int = None
+    scenario: str = ""
+    parameter: str = ""
+    parameter_id: str = ""
+    unit: str = ""
+    comment: str = ""
+    device_serial: str = ""
+    operator_name: str = ""
+    value: str = ""
+    formatted_value: str = ""
+    ideal_low: str = ""
+    ideal_high: str = ""
+    ideal_status: str = ""
+    timestamp: datetime = None
 
     def __init__(self, data: dict[str, Any]) -> None:
         """Init the measurement object."""
@@ -97,24 +97,24 @@ class Measurement(object):
 class Account(object):
     """Data class for decoded account data."""
 
-    id = None
-    forename = ""
-    surname = ""
-    street = ""
-    zipcode = ""
-    city = ""
-    phone1 = ""
-    phone2 = ""
-    fax = ""
-    email = ""
-    country = ""
-    canton = ""
-    notes = ""
-    volume = ""
-    volume_unit = ""
-    pooltext = ""
-    gps = ""
-    Measurements = []
+    id: int = None
+    forename: str = ""
+    surname: str = ""
+    street: str = ""
+    zipcode: str = ""
+    city: str = ""
+    phone1: str = ""
+    phone2: str = ""
+    fax: str = ""
+    email: str = ""
+    country: str = ""
+    canton: str = ""
+    notes: str = ""
+    volume: str = ""
+    volume_uni: str = ""
+    pooltext: str = ""
+    gps: str = ""
+    Measurements: list[Measurement] = []
 
     def __init__(self, data: dict[str, Any]) -> None:
         """Init the account object."""
@@ -159,10 +159,10 @@ class Account(object):
 class WaterTreatmentProduct(object):
     """Data class for decoded water treatment products."""
 
-    id = None
-    name = ""
-    effect = ""
-    phrase = ""
+    id: int = None
+    name: str = ""
+    effect: str = ""
+    phrase: str = ""
 
     def __init__(self, data: dict[str, Any]) -> None:
         """Init the water treatment product object."""
@@ -185,12 +185,12 @@ class WaterTreatmentProduct(object):
 class CloudAccount:
     """Master class for PoolLab data."""
 
-    id = None
-    email = ""
-    last_change_time = None
-    last_wtp_change = None
-    Accounts = []
-    WaterTreatmentProducts = []
+    id: int = None
+    email: str = ""
+    last_change_time: datetime = None
+    last_wtp_change: datetime = None
+    Accounts: list[Account] = []
+    WaterTreatmentProducts: list[WaterTreatmentProduct] = []
 
     def __init__(self, data: dict[str, Any]) -> None:
         """Init the clound account object."""
@@ -241,7 +241,7 @@ class CloudAccount:
 class PoolLabApi:
     """Public API class for PoolLab."""
 
-    def __init__(self, token: str, url = API_ENDPOINT) -> None:
+    def __init__(self, token: str, url=API_ENDPOINT) -> None:
         """Init the cloud api object."""
         self._token = token
         self._data = None

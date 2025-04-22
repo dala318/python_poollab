@@ -14,7 +14,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .poollab import API_ENDPOINT, PoolLabApi
+from .poollab import API_ENDPOINT, CloudAccount, PoolLabApi
 
 DOMAIN = "poollab"
 PLATFORMS = ["sensor"]
@@ -30,7 +30,7 @@ class PoolLabConfigException(HomeAssistantError):
     """Error to indicate there is an error in config."""
 
 
-class PoolLabCoordinator(DataUpdateCoordinator):
+class PoolLabCoordinator(DataUpdateCoordinator[CloudAccount]):
     """Coordinator for the PoolLab API."""
 
     def __init__(self, hass: HomeAssistant, api: PoolLabApi) -> None:
