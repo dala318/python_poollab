@@ -6,7 +6,7 @@ from typing import Any
 from gql import Client, gql
 from gql.transport.aiohttp import AIOHTTPTransport
 
-API_ENDPOINT = "https://production.backend.labcom.cloud/graphql"
+API_ENDPOINT = "https://backend.labcom.cloud/graphql"
 
 # Measurement ranges according to https://poollab.org/static/manuals/poollab_manual_gb-fr-e-d-i.pdf
 MEAS_RANGES_BY_SCENARIO = {
