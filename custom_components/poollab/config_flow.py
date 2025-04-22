@@ -111,12 +111,14 @@ class PoolLabConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     data=user_input,
                 )
 
-        default_api_key = config_entry.data.get(CONF_API_KEY) or None
-        default_url = config_entry.data.get(CONF_URL) or API_ENDPOINT
         user_schema = vol.Schema(
             {
-                vol.Required(CONF_API_KEY, default=default_api_key): cv.string,
-                vol.Optional(CONF_URL, default=default_url): cv.string,
+                vol.Required(
+                    CONF_API_KEY, default=config_entry.data.get(CONF_API_KEY)
+                ): cv.string,
+                vol.Optional(
+                    CONF_URL, default=config_entry.data.get(CONF_URL, API_ENDPOINT)
+                ): cv.string,
             }
         )
         return self.async_show_form(
