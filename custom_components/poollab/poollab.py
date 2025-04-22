@@ -241,10 +241,11 @@ class CloudAccount:
 class PoolLabApi:
     """Public API class for PoolLab."""
 
-    def __init__(self, token: str) -> None:
+    def __init__(self, token: str, url = API_ENDPOINT) -> None:
         """Init the cloud api object."""
         self._token = token
         self._data = None
+        self._url = url
 
     def _build_schema(self) -> str:
         schema = "\n"
@@ -259,7 +260,7 @@ class PoolLabApi:
         if schema is None:
             schema = self._build_schema()
         transport = AIOHTTPTransport(
-            url=API_ENDPOINT, headers={"Authorization": self._token}
+            url=self._url, headers={"Authorization": self._token}
         )
         async with Client(
             transport=transport,
