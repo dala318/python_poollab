@@ -111,7 +111,7 @@ class Account(object):
     canton: str = ""
     notes: str = ""
     volume: str = ""
-    volume_uni: str = ""
+    volume_unit: str = ""
     pooltext: str = ""
     gps: str = ""
     Measurements: list[Measurement] = []
