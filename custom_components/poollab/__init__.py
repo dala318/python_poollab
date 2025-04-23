@@ -104,13 +104,18 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
     version = config_entry.version
     _LOGGER.debug("Migrating from version %s", version)
 
-    new_data = {**config_entry.data}
-
     if version == 1:
-        config_entry.version = 2
+        new_data = {**config_entry.data}
         new_data[CONF_URL] = API_ENDPOINT
-        hass.config_entries.async_update_entry(config_entry, data=new_data)
-        _LOGGER.info("Migration to version %s successful", config_entry.version)
+
+        hass.config_entries.async_update_entry(
+            config_entry,
+            data=new_data,
+            version=2,
+        )
+
+        _LOGGER.info("Migration to version %s successful", 2)
         return True
 
     return False
+
