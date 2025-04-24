@@ -1,3 +1,8 @@
+[![Validate with hassfest](https://github.com/dala318/python_poollab/actions/workflows/hassfest.yaml/badge.svg)](https://github.com/dala318/python_poollab/actions/workflows/hassfest.yaml)
+[![HACS Action](https://github.com/dala318/python_poollab/actions/workflows/hacs.yaml/badge.svg)](https://github.com/dala318/python_poollab/actions/workflows/hacs.yaml)
+[![Release](https://github.com/dala318/python_poollab/actions/workflows/release.yaml/badge.svg)](https://github.com/dala318/python_poollab/actions/workflows/release.yaml)
+[![Dependabot Updates](https://github.com/dala318/python_poollab/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/dala318/python_poollab/actions/workflows/dependabot/dependabot-updates)
+
 ![Logo](PoolLab.jpg)
 # python_poollab
 Python API for Pool Lab 1.0
