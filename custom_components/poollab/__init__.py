@@ -11,23 +11,16 @@ from gql.client import TransportQueryError
 from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
 from homeassistant.const import CONF_API_KEY, CONF_URL
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
+from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
+from .config_flow import PoolLabConfigFlow
+from .const import DOMAIN
 from .poollab import API_ENDPOINT, CloudAccount, PoolLabApi
 
-DOMAIN = "poollab"
 PLATFORMS = ["sensor"]
 
 _LOGGER = logging.getLogger(__name__)
-
-
-class InvalidAuth(HomeAssistantError):
-    """Error to indicate there is invalid auth."""
-
-
-class PoolLabConfigException(HomeAssistantError):
-    """Error to indicate there is an error in config."""
 
 
 class PoolLabCoordinator(DataUpdateCoordinator[CloudAccount]):
@@ -101,16 +94,32 @@ async def async_reload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
 
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Migrate old entry."""
-    version = config_entry.version
-    _LOGGER.debug("Migrating from version %s", version)
+
+    installed_version = PoolLabConfigFlow.VERSION
+    installed_minor_version = PoolLabConfigFlow.MINOR_VERSION
 
     new_data = {**config_entry.data}
+    new_options = {**config_entry.options}
 
-    if version == 1:
-        config_entry.version = 2
+    _LOGGER.debug(
+        "Migrating from version %s.%s", config_entry.version, config_entry.minor_version
+    )
+
+    if CONF_URL not in config_entry.data:
         new_data[CONF_URL] = API_ENDPOINT
-        hass.config_entries.async_update_entry(config_entry, data=new_data)
-        _LOGGER.info("Migration to version %s successful", config_entry.version)
-        return True
+
+    hass.config_entries.async_update_entry(
+        config_entry,
+        data=new_data,
+        options=new_options,
+        version=installed_version,
+        minor_version=installed_minor_version,
+    )
+    _LOGGER.info(
+        "Migration to version %s.%s successful",
+        installed_version,
+        installed_minor_version,
+    )
+    return True
 
     return False

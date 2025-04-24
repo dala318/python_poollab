@@ -13,7 +13,7 @@ from homeassistant.const import CONF_API_KEY, CONF_URL
 from homeassistant.data_entry_flow import FlowResult
 import homeassistant.helpers.config_validation as cv
 
-from . import DOMAIN, InvalidAuth
+from .const import DOMAIN, InvalidAuth
 from .poollab import API_ENDPOINT, PoolLabApi
 
 _LOGGER = logging.getLogger(__name__)
@@ -28,6 +28,9 @@ class PoolLabConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """PoolLab config flow."""
 
     VERSION = 2
+    MINOR_VERSION = 2
+    data = None
+    options = None
     _reauth_entry: config_entries.ConfigEntry | None = None
 
     async def async_step_user(
