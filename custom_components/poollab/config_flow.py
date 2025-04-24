@@ -27,7 +27,7 @@ PLACEHOLDERS = {
 class PoolLabConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """PoolLab config flow."""
 
-    VERSION = 2
+    VERSION = 1
     MINOR_VERSION = 2
     data = None
     options = None
