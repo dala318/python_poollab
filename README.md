@@ -4,7 +4,7 @@
 [![Dependabot Updates](https://github.com/dala318/python_poollab/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/dala318/python_poollab/actions/workflows/dependabot/dependabot-updates)
 
 ![Logo](PoolLab.jpg)
-# python_poollab
+# Python PoolLab (Home Assistant)
 Python API for Pool Lab 1.0
 For now only fetching all data and parsing to classes.
 
