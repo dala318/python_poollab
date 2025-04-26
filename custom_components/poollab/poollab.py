@@ -260,7 +260,7 @@ class PoolLabApi:
         if schema is None:
             schema = self._build_schema()
         transport = AIOHTTPTransport(
-            url=self._url, headers={"Authorization": self._token}
+            url=self._url, headers={"Authorization": self._token}, ssl=True
         )
         async with Client(
             transport=transport,
