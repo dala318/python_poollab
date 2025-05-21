@@ -20,7 +20,7 @@ _or_
 
 1. Install HACS if you don't have it already
 2. Open HACS in Home Assistant
-3. Search for "Poollab"
+3. Search for "Pool Lab"
 4. Click the download button. ⬇️
 5. Restart Home Assistant
 
