@@ -67,11 +67,6 @@ class PoolLabCoordinator(DataUpdateCoordinator[CloudAccount]):
                 res[k] = [vv.as_dict() for vv in v]
             else:
                 res[k] = v
-        # res = {
-        #     k: v
-        #     for k, v in self.__dict__.items()
-        #     if not k.startswith("_") and not callable(v)
-        # }
         return res
 
 

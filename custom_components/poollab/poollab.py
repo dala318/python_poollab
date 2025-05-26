@@ -57,8 +57,12 @@ class Measurement:
     ideal_high: str = ""
     ideal_status: str = ""
     timestamp: datetime | None = None
-    interpreted_value: float | None = field(init=False, repr=False, default=None)
-    interpreted_oor: bool = field(init=False, repr=False, default=False)
+    interpreted_value: float | None = field(
+        init=False, default=None, metadata={"internal": True}
+    )
+    interpreted_oor: bool = field(
+        init=False, default=False, metadata={"internal": True}
+    )
 
     def __post_init__(self):
         """Post-initialization processing."""
@@ -80,7 +84,7 @@ class Measurement:
         return "".join(
             f"{indent}{f.name}\n"
             for f in fields(Measurement)
-            if not f.name.startswith("interpreted")
+            if not f.metadata.get("internal", False)
         )
 
     def as_dict(self) -> dict[str, Any]:
