@@ -57,11 +57,21 @@ class PoolLabCoordinator(DataUpdateCoordinator[CloudAccount]):
 
     def get_diag(self) -> dict[str, str]:
         """Convert the coordinator data to a dictionary."""
-        res = {
-            k: v
-            for k, v in self.__dict__.items()
-            if not k.startswith("_") and not callable(v)
-        }
+        res = {}
+        for k, v in self.data.as_dict().items():
+            if k.startswith("_") or callable(v):
+                continue
+            if k == "api":
+                res["api"] = v.as_dict()
+            elif isinstance(v, list):
+                res[k] = [vv.as_dict() for vv in v]
+            else:
+                res[k] = v
+        # res = {
+        #     k: v
+        #     for k, v in self.__dict__.items()
+        #     if not k.startswith("_") and not callable(v)
+        # }
         return res
 
 
