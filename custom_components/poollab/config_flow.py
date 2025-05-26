@@ -9,7 +9,7 @@ from typing import Any
 import voluptuous as vol
 
 from homeassistant import config_entries
-from homeassistant.const import CONF_API_KEY, CONF_URL
+from homeassistant.const import CONF_API_KEY, CONF_SSL, CONF_URL
 from homeassistant.data_entry_flow import FlowResult
 import homeassistant.helpers.config_validation as cv
 
@@ -18,17 +18,12 @@ from .poollab import API_ENDPOINT, PoolLabApi
 
 _LOGGER = logging.getLogger(__name__)
 
-PLACEHOLDERS = {
-    CONF_API_KEY: "API key",
-    CONF_URL: "API endpoint URL",
-}
-
 
 class PoolLabConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """PoolLab config flow."""
 
     VERSION = 1
-    MINOR_VERSION = 2
+    MINOR_VERSION = 3
     data = None
     options = None
     _reauth_entry: config_entries.ConfigEntry | None = None
@@ -41,6 +36,7 @@ class PoolLabConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         defaults = {
             CONF_API_KEY: "",
             CONF_URL: API_ENDPOINT,
+            CONF_SSL: True,
         }
 
         if user_input is not None:
@@ -79,12 +75,14 @@ class PoolLabConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Optional(
                     CONF_URL, default=defaults.get(CONF_URL, API_ENDPOINT)
                 ): cv.string,
+                vol.Optional(
+                    CONF_SSL, default=defaults.get(CONF_SSL, True)
+                ): cv.boolean,
             }
         )
         return self.async_show_form(
             step_id="user",
             data_schema=user_schema,
-            description_placeholders=PLACEHOLDERS,
             errors=errors,
         )
 
@@ -122,12 +120,14 @@ class PoolLabConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Optional(
                     CONF_URL, default=config_entry.data.get(CONF_URL, API_ENDPOINT)
                 ): cv.string,
+                vol.Optional(
+                    CONF_SSL, default=config_entry.data.get(CONF_SSL, True)
+                ): cv.boolean,
             }
         )
         return self.async_show_form(
             step_id="reconfigure",
             data_schema=user_schema,
-            description_placeholders=PLACEHOLDERS,
             errors=errors,
         )
 
@@ -145,7 +145,9 @@ class PoolLabConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def is_valid(self, user_input):
         """Check for user input errors."""
         poollab_api = PoolLabApi(
-            token=user_input[CONF_API_KEY], url=user_input[CONF_URL]
+            token=user_input[CONF_API_KEY],
+            url=user_input[CONF_URL],
+            ssl=user_input[CONF_SSL],
         )
         if not await poollab_api.test():
             raise InvalidAuth

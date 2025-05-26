@@ -6,7 +6,17 @@
                 "description": "Setup a PoolLab integration, get key from https://labcom.cloud/pages/user-setting",
                 "data": {
                     "api_key": "API key",
-                    "url": "API endpoint URL"
+                    "url": "API endpoint URL",
+                    "ssl": "Use SSL"
+                }
+            },
+            "reconfigure": {
+                "title": "PoolLab",
+                "description": "Reconfigure a PoolLab integration, get key from https://labcom.cloud/pages/user-setting",
+                "data": {
+                    "api_key": "API key",
+                    "url": "API endpoint URL",
+                    "ssl": "Use SSL"
                 }
             }
         },
