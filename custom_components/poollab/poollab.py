@@ -1,12 +1,13 @@
 """PoolLab API handler."""
 
+from dataclasses import dataclass, field, fields
 from datetime import datetime
 from typing import Any
 
+API_ENDPOINT = "https://backend.labcom.cloud/graphql"
+
 from gql import Client, gql
 from gql.transport.aiohttp import AIOHTTPTransport
-
-API_ENDPOINT = "https://backend.labcom.cloud/graphql"
 
 # Measurement ranges according to https://poollab.org/static/manuals/poollab_manual_gb-fr-e-d-i.pdf
 MEAS_RANGES_BY_SCENARIO = {
@@ -38,10 +39,11 @@ MEAS_RANGES_BY_SCENARIO = {
 }
 
 
-class Measurement(object):
-    """Data class for decoded water measurement."""
+@dataclass
+class Measurement:
+    """Data class for PoolLab measurements."""
 
-    id: int = None
+    id: int | None = None
     scenario: str = ""
     parameter: str = ""
     parameter_id: str = ""
@@ -54,50 +56,43 @@ class Measurement(object):
     ideal_low: str = ""
     ideal_high: str = ""
     ideal_status: str = ""
-    timestamp: datetime = None
+    timestamp: datetime | None = None
+    interpreted_value: float | None = field(init=False, repr=False, default=None)
+    interpreted_oor: bool = field(init=False, repr=False, default=False)
 
-    def __init__(self, data: dict[str, Any]) -> None:
-        """Init the measurement object."""
-        for key, value in data.items():
-            if "timestamp" in key:
-                setattr(self, key, datetime.fromtimestamp(value))
-            else:
-                setattr(self, key, value)
+    def __post_init__(self):
+        """Post-initialization processing."""
+        if isinstance(self.timestamp, (int, float)):
+            self.timestamp = datetime.fromtimestamp(self.timestamp)
 
-        self.interpreted_value = None
-        self.interpreted_oor = False
         if self.value and self.scenario in MEAS_RANGES_BY_SCENARIO:
             try:
-                value = float(self.value)
-                range_min = MEAS_RANGES_BY_SCENARIO[self.scenario][0]
-                range_max = MEAS_RANGES_BY_SCENARIO[self.scenario][1]
-                if value < range_min:
-                    self.interpreted_value = float(range_min)
-                    self.interpreted_oor = True
-                elif value > range_max:
-                    self.interpreted_value = float(range_max)
-                    self.interpreted_oor = True
-                else:
-                    self.interpreted_value = value
-            except:  # noqa: E722
+                val = float(self.value)
+                min_val, max_val = MEAS_RANGES_BY_SCENARIO[self.scenario]
+                self.interpreted_value = max(min(val, max_val), min_val)
+                self.interpreted_oor = not (min_val <= val <= max_val)
+            except ValueError:
                 pass
 
     @staticmethod
     def get_schema(indent: str) -> str:
-        """Return the schema for the measurement object."""
-        schema = ""
-        for attribute in Measurement.__dict__:
-            if attribute[:2] != "__":
-                value = getattr(Measurement, attribute)
-                if not callable(value):
-                    schema += indent + str(attribute) + "\n"
-        return schema
+        """Return the schema for the Measurement class."""
+        return "".join(
+            f"{indent}{f.name}\n"
+            for f in fields(Measurement)
+            if not f.name.startswith("interpreted")
+        )
+
+    def as_dict(self) -> dict[str, Any]:
+        """Return the Measurement as a dictionary."""
+        return self.__dict__.copy()
 
 
-class Account(object):
-    """Data class for decoded account data."""
+@dataclass
+class Account:
+    """Data class for PoolLab accounts."""
 
-    id: int = None
+    id: int | None = None
     forename: str = ""
     surname: str = ""
     street: str = ""
@@ -114,103 +109,95 @@ class Account(object):
     volume_unit: str = ""
     pooltext: str = ""
     gps: str = ""
-    Measurements: list[Measurement] = []
+    Measurements: list[Measurement] = field(default_factory=list)
 
-    def __init__(self, data: dict[str, Any]) -> None:
-        """Init the account object."""
-        for key, value in data.items():
-            if key == "Measurements":
-                for m in data["Measurements"]:
-                    self.Measurements.append(Measurement(m))
-            else:
-                setattr(self, key, value)
+    def __post_init__(self):
+        """Post-initialization processing."""
+        self.Measurements = [
+            m if isinstance(m, Measurement) else Measurement(**m)
+            for m in self.Measurements
+        ]
 
     @property
     def full_name(self) -> str:
-        """Compiled full name of account."""
-        _full_name = ""
-        if self.forename:
-            _full_name += self.forename
-        if self.surname:
-            if _full_name:
-                _full_name += " "
-            _full_name += self.surname
-        return _full_name
+        """Return the full name of the account holder."""
+        return f"{self.forename} {self.surname}".strip()
 
     @staticmethod
-    def get_schema(indent: str) -> str:
-        """Return the schema for the account object."""
+    def get_schema(indent: str = "") -> str:
+        """Return the schema for the Account class."""
         schema = ""
-        for attribute in Account.__dict__:
-            if attribute[:2] != "__":
-                value = getattr(Account, attribute)
-                if not callable(value):
-                    if attribute == "Measurements":
-                        schema += indent + "Measurements {\n"
-                        schema += Measurement.get_schema(indent + "  ")
-                        schema += indent + "}\n"
-                    elif attribute == "full_name":
-                        pass
-                    else:
-                        schema += indent + str(attribute) + "\n"
+        for f in fields(Account):
+            if f.name == "Measurements":
+                schema += f"{indent}Measurements {{\n"
+                schema += Measurement.get_schema(indent + "  ")
+                schema += f"{indent}}}\n"
+            else:
+                schema += f"{indent}{f.name}\n"
         return schema
 
+    def as_dict(self) -> dict[str, Any]:
+        """Return the Account as a dictionary."""
+        return self.__dict__.copy()
 
-class WaterTreatmentProduct(object):
-    """Data class for decoded water treatment products."""
+
+@dataclass
+class WaterTreatmentProduct:
+    """Data class for PoolLab water treatment products."""
 
     id: int = None
     name: str = ""
     effect: str = ""
     phrase: str = ""
 
-    def __init__(self, data: dict[str, Any]) -> None:
-        """Init the water treatment product object."""
-
-        for key, value in data.items():
-            setattr(self, key, value)
+    def __post_init__(self):
+        """Post-initialization processing."""
+        pass  # Nothing special for now, can keep or drop
 
     @staticmethod
     def get_schema(indent: str) -> str:
-        """Return the schema for the water treatment product object."""
-        schema = ""
-        for attribute in WaterTreatmentProduct.__dict__:
-            if attribute[:2] != "__":
-                value = getattr(WaterTreatmentProduct, attribute)
-                if not callable(value):
-                    schema += indent + str(attribute) + "\n"
-        return schema
+        """Return the schema for the WaterTreatmentProduct class."""
+        return "".join(f"{indent}{f.name}\n" for f in fields(WaterTreatmentProduct))
+
+    def as_dict(self) -> dict[str, Any]:
+        """Return the WaterTreatmentProduct as a dictionary."""
+        return self.__dict__.copy()
 
 
+@dataclass
 class CloudAccount:
-    """Master class for PoolLab data."""
+    """Data class for PoolLab cloud account."""
 
     id: int = None
     email: str = ""
-    last_change_time: datetime = None
-    last_wtp_change: datetime = None
-    Accounts: list[Account] = []
-    WaterTreatmentProducts: list[WaterTreatmentProduct] = []
+    last_change_time: datetime | None = None
+    last_wtp_change: datetime | None = None
+    Accounts: list[Account] = field(default_factory=list)
+    WaterTreatmentProducts: list[WaterTreatmentProduct] = field(default_factory=list)
 
-    def __init__(self, data: dict[str, Any]) -> None:
-        """Init the clound account object."""
+    def __init__(self, data: dict[str, Any]):
+        """Initialize the CloudAccount from a dictionary."""
+        if cloud_data := data.get("CloudAccount"):
+            self.id = cloud_data.get("id")
+            self.email = cloud_data.get("email")
+            self.last_change_time = (
+                datetime.fromtimestamp(cloud_data["last_change_time"])
+                if "last_change_time" in cloud_data
+                else None
+            )
+            self.last_wtp_change = (
+                datetime.fromtimestamp(cloud_data["last_wtp_change"])
+                if "last_wtp_change" in cloud_data
+                else None
+            )
+            self.Accounts = [Account(**a) for a in cloud_data.get("Accounts", [])]
+            self.WaterTreatmentProducts = [
+                WaterTreatmentProduct(**w)
+                for w in cloud_data.get("WaterTreatmentProducts", [])
+            ]
 
-        if data := data.get("CloudAccount"):
-            # data = data["CloudAccount"]
-            for key, value in data.items():
-                if key == "Accounts":
-                    for a in data["Accounts"]:
-                        self.Accounts.append(Account(a))
-                elif key == "WaterTreatmentProducts":
-                    for w in data["WaterTreatmentProducts"]:
-                        self.WaterTreatmentProducts.append(WaterTreatmentProduct(w))
-                elif "last" in key:
-                    setattr(self, key, datetime.fromtimestamp(value))
-                else:
-                    setattr(self, key, value)
-
-    def get_measurement(self, account_id: int, meas_param: str):
-        """Get a measurement."""
+    def get_measurement(self, account_id: int, meas_param: str) -> Measurement:
+        """Get the latest measurement for a given account and parameter."""
         account = next(x for x in self.Accounts if x.id == account_id)
         sorted_meas = sorted(
             account.Measurements, key=lambda x: x.timestamp, reverse=True
@@ -219,23 +206,31 @@ class CloudAccount:
 
     @staticmethod
     def get_schema(indent: str) -> str:
-        """Return the schema for the cloud account object."""
+        """Return the schema for the CloudAccount class."""
         schema = ""
-        for attribute in CloudAccount.__dict__:
-            if attribute[:2] != "__":
-                value = getattr(CloudAccount, attribute)
-                if not callable(value):
-                    if attribute == "Accounts":
-                        schema += indent + "Accounts {\n"
-                        schema += Account.get_schema(indent + "  ")
-                        schema += indent + "}\n"
-                    elif attribute == "WaterTreatmentProducts":
-                        schema += indent + "WaterTreatmentProducts {\n"
-                        schema += WaterTreatmentProduct.get_schema(indent + "  ")
-                        schema += indent + "}\n"
-                    else:
-                        schema += indent + str(attribute) + "\n"
+        for attr in [
+            "id",
+            "email",
+            "last_change_time",
+            "last_wtp_change",
+            "Accounts",
+            "WaterTreatmentProducts",
+        ]:
+            if attr == "Accounts":
+                schema += f"{indent}Accounts {{\n"
+                schema += Account.get_schema(indent + "  ")
+                schema += f"{indent}}}\n"
+            elif attr == "WaterTreatmentProducts":
+                schema += f"{indent}WaterTreatmentProducts {{\n"
+                schema += WaterTreatmentProduct.get_schema(indent + "  ")
+                schema += f"{indent}}}\n"
+            else:
+                schema += f"{indent}{attr}\n"
         return schema
+
+    def as_dict(self) -> dict[str, Any]:
+        """Return the CloudAccount as a dictionary."""
+        return self.__dict__.copy()
 
 
 class PoolLabApi:
