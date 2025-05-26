@@ -9,7 +9,7 @@ import logging
 from gql.client import TransportQueryError
 
 from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
-from homeassistant.const import CONF_API_KEY, CONF_URL
+from homeassistant.const import CONF_API_KEY, CONF_SSL, CONF_URL
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -81,7 +81,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
         hass.data[DOMAIN][config_entry.entry_id] = poollab = PoolLabCoordinator(
             hass,
             PoolLabApi(
-                token=config_entry.data[CONF_API_KEY], url=config_entry.data[CONF_URL]
+                token=config_entry.data[CONF_API_KEY],
+                url=config_entry.data[CONF_URL],
+                ssl=config_entry.data.get("ssl", True),
             ),
         )
     else:
@@ -128,6 +130,9 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
     if CONF_URL not in config_entry.data:
         new_data[CONF_URL] = API_ENDPOINT
 
+    if CONF_SSL not in config_entry.data:
+        new_data[CONF_SSL] = True
+
     hass.config_entries.async_update_entry(
         config_entry,
         data=new_data,
@@ -141,5 +146,3 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         installed_minor_version,
     )
     return True
-
-    return False
