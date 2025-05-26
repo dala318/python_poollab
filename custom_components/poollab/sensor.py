@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from homeassistant.components.sensor import SensorEntity, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
@@ -21,6 +22,7 @@ async def async_setup_entry(
 ):
     """Setups sensor platform for the ui."""
     api_coordinator: PoolLabCoordinator = hass.data[DOMAIN][config_entry.entry_id]
+    sensors = []
     for a in api_coordinator.data.Accounts:
         # params = list(set([m.parameter for m in a.Measurements]))
         params = list({m.parameter for m in a.Measurements})
@@ -41,7 +43,10 @@ async def async_setup_entry(
                     m.unit,
                 )
                 param_added.append(m.parameter)
-                async_add_entities([MeasurementSensor(api_coordinator, a, m)])
+                sensor = MeasurementSensor(api_coordinator, a, m)
+                sensors.append(sensor)
+                # api_coordinator.add_entity_ref(sensor)  # Only for debugging
+    async_add_entities(sensors)
     return True
 
 
@@ -131,3 +136,7 @@ class MeasurementSensor(CoordinatorEntity, SensorEntity):
             "parameter": self._latest_measurement.parameter,
             "scenario": self._latest_measurement.scenario,
         }
+
+    def as_dict(self) -> dict[str, Any]:
+        """Return the sensor as a dictionary."""
+        return self.__dict__.copy()

@@ -33,11 +33,12 @@ class PoolLabCoordinator(DataUpdateCoordinator[CloudAccount]):
             _LOGGER,
             name="PoolLab API",
             update_interval=timedelta(seconds=30),
-            update_method=self._async_update_data,
+            update_method=self._async_update_poollab,
         )
         self.api = api
+        self.entities = []
 
-    async def _async_update_data(self):
+    async def _async_update_poollab(self):
         """Fetch data from API endpoint."""
         try:
             async with asyncio.timeout(10):
@@ -48,6 +49,25 @@ class PoolLabCoordinator(DataUpdateCoordinator[CloudAccount]):
             raise ConfigEntryAuthFailed from err
         except Exception as err:
             raise UpdateFailed(f"Unknown error communicating with API: {err}") from err
+
+    def add_entity_ref(self, entity) -> None:
+        """Add an entity reference to the coordinator."""
+        if entity not in self.entities:
+            self.entities.append(entity)
+
+    def get_diag(self) -> dict[str, str]:
+        """Convert the coordinator data to a dictionary."""
+        res = {}
+        for k, v in self.data.as_dict().items():
+            if k.startswith("_") or callable(v):
+                continue
+            if k == "api":
+                res["api"] = v.as_dict()
+            elif isinstance(v, list):
+                res[k] = [vv.as_dict() for vv in v]
+            else:
+                res[k] = v
+        return res
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
