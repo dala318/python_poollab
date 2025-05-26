@@ -18,12 +18,6 @@ from .poollab import API_ENDPOINT, PoolLabApi
 
 _LOGGER = logging.getLogger(__name__)
 
-# PLACEHOLDERS = {
-#     CONF_API_KEY: "API key",
-#     CONF_URL: "API endpoint URL",
-#     CONF_SSL: "Use SSL (recommended)",
-# }
-
 
 class PoolLabConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """PoolLab config flow."""
@@ -89,7 +83,6 @@ class PoolLabConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="user",
             data_schema=user_schema,
-            # description_placeholders=PLACEHOLDERS,
             errors=errors,
         )
 
@@ -135,7 +128,6 @@ class PoolLabConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="reconfigure",
             data_schema=user_schema,
-            # description_placeholders=PLACEHOLDERS,
             errors=errors,
         )
 
