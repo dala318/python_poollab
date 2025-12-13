@@ -1,3 +1,5 @@
+logging
+requests_toolbelt
 gql
 
 pytest

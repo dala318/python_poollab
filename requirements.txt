@@ -1,2 +1,4 @@
 homeassistant
+logging
+requests_toolbelt
 gql
