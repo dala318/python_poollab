@@ -6,8 +6,11 @@ from typing import Any
 
 API_ENDPOINT = "https://backend.labcom.cloud/graphql"
 
+import logging
 from gql import Client, gql
 from gql.transport.aiohttp import AIOHTTPTransport
+from gql.transport.requests import log as requests_logger
+requests_logger.setLevel(logging.WARNING)
 
 # Measurement ranges according to https://poollab.org/static/manuals/poollab_manual_gb-fr-e-d-i.pdf
 MEAS_RANGES_BY_SCENARIO = {
