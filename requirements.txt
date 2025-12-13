@@ -1,2 +1,3 @@
 homeassistant
+logging
 gql
