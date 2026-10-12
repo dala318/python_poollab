@@ -5,16 +5,22 @@ on:
   pull_request:
     paths:
       - '**.py'
+      - 'custom_components/**/*.json'
+      - 'requirements.test.txt'
+      - '.github/workflows/tests.yaml'
   push:
     paths:
       - '**.py'
+      - 'custom_components/**/*.json'
+      - 'requirements.test.txt'
+      - '.github/workflows/tests.yaml'
 
 jobs:
   tests:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.12']
+        python-version: ['3.12', '3.14']
 
     steps:
       - uses: actions/checkout@v4
