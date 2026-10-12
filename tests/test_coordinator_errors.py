@@ -16,7 +16,7 @@ from custom_components.poollab.poollab import PoolLabApi
     [
         (
             TimeoutError(),
-            "PoolLab cloud request timed out after 10 seconds; "
+            "PoolLab cloud request timed out; "
             "no new measurements were fetched. Home Assistant will retry automatically.",
         ),
         (
@@ -47,7 +47,10 @@ async def test_api_failure_has_useful_message(hass, error, expected_message):
 
 async def test_request_deadline_has_timeout_message(hass, monkeypatch):
     """An expired request deadline must use the timeout-specific message."""
-    monkeypatch.setattr("custom_components.poollab.REQUEST_TIMEOUT", 0)
+    timeout = asyncio.timeout
+    monkeypatch.setattr(
+        "custom_components.poollab.asyncio.timeout", lambda _: timeout(0)
+    )
 
     async def pending_request():
         await asyncio.sleep(0)
@@ -56,7 +59,7 @@ async def test_request_deadline_has_timeout_message(hass, monkeypatch):
     api.request = AsyncMock(side_effect=pending_request)
     coordinator = PoolLabCoordinator(hass, api)
 
-    with pytest.raises(UpdateFailed, match="cloud request timed out after 0 seconds"):
+    with pytest.raises(UpdateFailed, match="cloud request timed out;"):
         await coordinator._async_update_poollab()
 
     assert api.request.await_count == 1
