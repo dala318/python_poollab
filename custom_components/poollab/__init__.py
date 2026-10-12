@@ -19,6 +19,7 @@ from .const import DOMAIN
 from .poollab import API_ENDPOINT, CloudAccount, PoolLabApi
 
 PLATFORMS = ["sensor"]
+REQUEST_TIMEOUT = 10
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -41,14 +42,23 @@ class PoolLabCoordinator(DataUpdateCoordinator[CloudAccount]):
     async def _async_update_poollab(self):
         """Fetch data from API endpoint."""
         try:
-            async with asyncio.timeout(10):
+            async with asyncio.timeout(REQUEST_TIMEOUT):
                 return await self.api.request()
         except TransportQueryError as err:
             # Raising ConfigEntryAuthFailed will cancel future updates
             # and start a config flow with SOURCE_REAUTH (async_step_reauth)
             raise ConfigEntryAuthFailed from err
+        except TimeoutError as err:
+            raise UpdateFailed(
+                f"PoolLab cloud request timed out after {REQUEST_TIMEOUT} seconds; "
+                "no new measurements were fetched. Home Assistant will retry automatically."
+            ) from err
         except Exception as err:
-            raise UpdateFailed(f"Unknown error communicating with API: {err}") from err
+            detail = str(err).strip() or "no error message provided"
+            raise UpdateFailed(
+                f"PoolLab API request failed ({type(err).__name__}): {detail}. "
+                "Home Assistant will retry automatically."
+            ) from err
 
     def add_entity_ref(self, entity) -> None:
         """Add an entity reference to the coordinator."""
