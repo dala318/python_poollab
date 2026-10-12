@@ -6,8 +6,11 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from custom_components.poollab import PoolLabCoordinator
-from custom_components.poollab.poollab import CloudAccount, PoolLabApi
+from homeassistant.const import CONF_API_KEY, CONF_URL
+from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+from custom_components.poollab import DOMAIN, PoolLabCoordinator
+from custom_components.poollab.poollab import API_ENDPOINT, CloudAccount, PoolLabApi
 from custom_components.poollab.sensor import MeasurementSensor
 
 
@@ -174,3 +177,83 @@ async def test_sensor_availability_recovers(measurement_sensor, cloud_data):
         sensor._handle_coordinator_update()
     assert writes == [False, True]
     assert sensor.native_value == 7.2
+
+
+@pytest.mark.parametrize("same_value", [False, True])
+@pytest.mark.asyncio
+async def test_partial_sync_preserves_unmeasured_timestamps(
+    hass, cloud_data, freezer, same_value
+):
+    """A partial sync must not report an unmeasured sensor again (#67)."""
+    first_day = deepcopy(cloud_data)
+    first_day["CloudAccount"]["Accounts"][0]["Measurements"].append({
+        "id": 5,
+        "parameter": "PL Cyanuric Acid",
+        "scenario": "431-Cyanuric-Acid",
+        "unit": "mg/l",
+        "value": "30",
+        "timestamp": 1720000000,
+    })
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={CONF_API_KEY: "test-token", CONF_URL: API_ENDPOINT},
+        version=1,
+        minor_version=3,
+    )
+    entry.add_to_hass(hass)
+    with patch(
+        "custom_components.poollab.PoolLabApi.request",
+        return_value=CloudAccount(first_day),
+    ):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+        coordinator = hass.data[DOMAIN][entry.entry_id]
+        original = {
+            state.attributes["parameter"]: (
+                state.last_changed,
+                state.last_updated,
+                state.last_reported,
+                state.attributes["measured_at"],
+            )
+            for state in hass.states.async_all("sensor")
+            if "parameter" in state.attributes
+        }
+        assert len(original) == 3
+
+        second_day = deepcopy(first_day)
+        measurements = second_day["CloudAccount"]["Accounts"][0]["Measurements"]
+        for measurement in measurements[:2]:
+            measurement["id"] += 10
+            measurement["timestamp"] += 86400
+            if not same_value:
+                measurement["value"] = str(float(measurement["value"]) + 0.1)
+
+        freezer.tick(timedelta(milliseconds=1))
+        coordinator.async_set_updated_data(CloudAccount(second_day))
+        await hass.async_block_till_done()
+
+        updated = {
+            state.attributes["parameter"]: state
+            for state in hass.states.async_all("sensor")
+            if "parameter" in state.attributes
+        }
+        cya = updated["PL Cyanuric Acid"]
+        assert (
+            cya.last_changed,
+            cya.last_updated,
+            cya.last_reported,
+            cya.attributes["measured_at"],
+        ) == original["PL Cyanuric Acid"]
+        for parameter in ("PL pH", "PL Chlorine Free"):
+            state = updated[parameter]
+            before = original[parameter]
+            if same_value:
+                assert state.last_changed == before[0]
+            else:
+                assert state.last_changed > before[0]
+            assert state.last_updated > before[1]
+            assert state.last_reported > before[2]
+            assert state.attributes["measured_at"] == before[3] + timedelta(days=1)
+
+        assert await hass.config_entries.async_unload(entry.entry_id)
