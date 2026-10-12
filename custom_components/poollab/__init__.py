@@ -72,7 +72,6 @@ class PoolLabCoordinator(DataUpdateCoordinator[CloudAccount]):
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Set up this integration using UI."""
-    config_entry.async_on_unload(config_entry.add_update_listener(async_reload_entry))
 
     if DOMAIN not in hass.data:
         hass.data[DOMAIN] = {}
@@ -107,11 +106,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)
     return unload_ok
-
-
-async def async_reload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> None:
-    """Reload the config entry when it changed."""
-    await hass.config_entries.async_reload(config_entry.entry_id)
 
 
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
