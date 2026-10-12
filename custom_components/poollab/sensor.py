@@ -99,15 +99,27 @@ class MeasurementSensor(CoordinatorEntity, SensorEntity):
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_icon = "mdi:water-percent"
         self._update_values()
+        self._last_available = self.available
 
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
+        if not self.available:
+            if self._last_available:
+                self._last_available = False
+                self.async_write_ha_state()
+            return
+
         try:
-            self._latest_measurement = self.coordinator.data.get_measurement(
+            latest_measurement = self.coordinator.data.get_measurement(
                 self._account.id, self._latest_measurement.parameter
             )
+            if latest_measurement == self._latest_measurement and self._last_available:
+                return
+
+            self._latest_measurement = latest_measurement
             self._update_values()
+            self._last_available = True
             self.async_write_ha_state()
         except StopIteration:
             _LOGGER.error(
