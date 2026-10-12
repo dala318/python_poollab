@@ -3,7 +3,7 @@
         "step": {
             "user": {
                 "title": "PoolLab",
-                "description": "Setup a PoolLab integration, get key from https://labcom.cloud/pages/user-setting",
+                "description": "Setup a PoolLab integration, get key from {api_key_url}",
                 "data": {
                     "api_key": "API key",
                     "url": "API endpoint URL",
@@ -12,7 +12,7 @@
             },
             "reconfigure": {
                 "title": "PoolLab",
-                "description": "Reconfigure a PoolLab integration, get key from https://labcom.cloud/pages/user-setting",
+                "description": "Reconfigure a PoolLab integration, get key from {api_key_url}",
                 "data": {
                     "api_key": "API key",
                     "url": "API endpoint URL",
