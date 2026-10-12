@@ -16,7 +16,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .config_flow import PoolLabConfigFlow
 from .const import DOMAIN
-from .poollab import API_ENDPOINT, CloudAccount, PoolLabApi
+from .poollab import API_ENDPOINT, REQUEST_TIMEOUT_SECONDS, CloudAccount, PoolLabApi
 
 PLATFORMS = ["sensor"]
 
@@ -32,7 +32,8 @@ class PoolLabCoordinator(DataUpdateCoordinator[CloudAccount]):
             hass,
             _LOGGER,
             name="PoolLab API",
-            update_interval=timedelta(seconds=30),
+            update_interval=timedelta(minutes=15),
+            always_update=False,
             update_method=self._async_update_poollab,
         )
         self.api = api
@@ -41,7 +42,7 @@ class PoolLabCoordinator(DataUpdateCoordinator[CloudAccount]):
     async def _async_update_poollab(self):
         """Fetch data from API endpoint."""
         try:
-            async with asyncio.timeout(10):
+            async with asyncio.timeout(REQUEST_TIMEOUT_SECONDS):
                 return await self.api.request()
         except TransportQueryError as err:
             # Raising ConfigEntryAuthFailed will cancel future updates
