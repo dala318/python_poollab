@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Any
 
 API_ENDPOINT = "https://backend.labcom.cloud/graphql"
+REQUEST_TIMEOUT_SECONDS = 30
 
 import logging
 from gql import Client, gql
@@ -263,10 +264,14 @@ class PoolLabApi:
         if schema is None:
             schema = self._build_schema()
         transport = AIOHTTPTransport(
-            url=self._url, headers={"Authorization": self._token}, ssl=self._ssl
+            url=self._url,
+            headers={"Authorization": self._token},
+            ssl=self._ssl,
+            timeout=REQUEST_TIMEOUT_SECONDS,
         )
         async with Client(
             transport=transport,
+            execute_timeout=REQUEST_TIMEOUT_SECONDS,
             fetch_schema_from_transport=False,  # Only for building GQL
         ) as session:
             query = gql(schema)
