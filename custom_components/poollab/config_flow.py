@@ -18,6 +18,8 @@ from .poollab import API_ENDPOINT, PoolLabApi
 
 _LOGGER = logging.getLogger(__name__)
 
+API_KEY_URL = "https://labcom.cloud/pages/user-setting"
+
 
 class PoolLabConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """PoolLab config flow."""
@@ -84,6 +86,7 @@ class PoolLabConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=user_schema,
             errors=errors,
+            description_placeholders={"api_key_url": API_KEY_URL},
         )
 
     async def async_step_reconfigure(
@@ -129,6 +132,7 @@ class PoolLabConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="reconfigure",
             data_schema=user_schema,
             errors=errors,
+            description_placeholders={"api_key_url": API_KEY_URL},
         )
 
     async def async_step_import(self, import_data) -> FlowResult:
