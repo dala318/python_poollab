@@ -47,8 +47,17 @@ class PoolLabCoordinator(DataUpdateCoordinator[CloudAccount]):
             # Raising ConfigEntryAuthFailed will cancel future updates
             # and start a config flow with SOURCE_REAUTH (async_step_reauth)
             raise ConfigEntryAuthFailed from err
+        except TimeoutError as err:
+            raise UpdateFailed(
+                "PoolLab cloud request timed out; "
+                "no new measurements were fetched. Home Assistant will retry automatically."
+            ) from err
         except Exception as err:
-            raise UpdateFailed(f"Unknown error communicating with API: {err}") from err
+            detail = str(err).strip() or "no error message provided"
+            raise UpdateFailed(
+                f"PoolLab API request failed ({type(err).__name__}): {detail}. "
+                "Home Assistant will retry automatically."
+            ) from err
 
     def add_entity_ref(self, entity) -> None:
         """Add an entity reference to the coordinator."""
